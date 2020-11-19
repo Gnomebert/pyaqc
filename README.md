@@ -1,7 +1,7 @@
 # pyaqc
 Ambulance problem, python quantum utilities eg Dicke_state(n_qubits: int , HWeight: int)
 
-Down load this code into your environment site-package\pyaqc
+Down load this code into your environment:
 
 eg if the environment is tim_env
 
