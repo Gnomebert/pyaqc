@@ -5,11 +5,14 @@ Down load this code into your environment:
 
 eg if the environment is tim_env
 
-Find the folder on your computer that stores the Python environment, eg
+1) Find the folder on your computer that stores the Python environment, eg 
+
 'Anaconda3\envs\tim_env\Lib\site-package'
 
-Create a new folder, which will contain utility python programs. eg create:
-'Anaconda3\envs\tim_env\Lib\site-package\pyaqc'
+2) Create a new folder, which will contain utility python programs. eg create:
 
-download the code from git hub online repo 'pyaqc' into the local directory on your computer:
-eg 'Anaconda3\envs\tim_env\Lib\site-package\pyaqc'
+'Anaconda3\envs\tim_env\Lib\site-package\pyaqc' 
+
+3) download the code from git hub online repo 'pyaqc' into the local directory on your computer:
+
+eg 'Anaconda3\envs\tim_env\Lib\site-package\pyaqc' 
