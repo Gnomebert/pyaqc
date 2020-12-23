@@ -2,7 +2,7 @@
 #All functions in this file should not include any quantum computer specific code, eg not import qiskit nor import pyquil, nor import dimod
 def test1(x):
     if x:
-        print(x,' != 0')
+        print(x,' != 0 hi')
     else:
         print(x,' == 0')
 """
@@ -133,9 +133,10 @@ def print_QUBOdetails(quboUnordered: 'dict of edge and nodes', n_qubits, filenam
         print('\n')
  
    
-def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint: bool =True,
-HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency table'=True ):
+def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint =True,
+HammingWeightOfConstraint=1, qubo_model=True ):
     """
+    
     Returns a 2d dict: type {(0,0):0}. n_qubits * n_qubits,  of an adjacency table for the ambulance problem. 
      
     HammingWeightOfConstraint = 2 sets as a constraint the number of 1s in the solution to 2.

@@ -127,22 +127,27 @@ def SolutionDistance(psi_opt,A0_sol,A1_sol,qubo,Nlocs):
                 d1 += elem * psi_opt[ qubo_pos[0] ]
     return d0 + d1
     
-def Print_Destinations(response, Height,Width):
-    print(response.first[1], '= Lowest energy found by SimulatedAnnealingSampler() in a grid',Width,'(w) by',Height,'(h)' )
+def Print_Destinations(response, Height,Width, sampler_used='Sampler()', A0_sol=-1 , A1_sol=-1, show_start_pos=0):
+    print(response.first[1], ' = Lowest energy found by',sampler_used,' in a grid',Width,'(w) by',Height,'(h)' )
     ConstraintMet = 1
-    psi_opt =[]
-    for i,elem in  response.first[0].items():       #convert dict to list
-            psi_opt.append(elem)
+    psi_opt =list( response.first[0].values())
+    display_psi = psi_opt
     #Check that Ambulances do not share a destination
     for q0, q1 in zip(psi_opt[:Width * Height],  psi_opt[Width * Height:2*Width * Height]):
         if q0 + q1 >1:
             ConstraintMet =0
+    #Add 10 or 20 to indicate the starting position of A0 and A1
+    if A0_sol != -1 and show_start_pos:
+            display_psi[A0_sol] = display_psi[A0_sol] + 10
+    if A1_sol != -1 and show_start_pos:
+        display_psi[A1_sol] = display_psi[A1_sol] + 20
         
     if ConstraintMet:
-        print('Destination Constraints were Met.','\n Map of destinations of each ambulance, 1 for A0, 0 for A1')
-        Grid_Destinations(psi_opt,Height,Width)
+        print('Destination Constraints were Met.')
+        print(' Map of destinations of each ambulance, 1 for A0, 0 for A1. Where A0 starts add 10, A1 add 20')
+        Grid_Destinations(display_psi,Height,Width)
     else:
         print('ERROR: Destination Constraints not Met ')
-        print(psi_opt[:Width * Height],              '= psi_opt first ambulance destinations')
-        print(psi_opt[Width * Height:2*Width * Height], '= psi_opt 2nd ambulance destinations \n')
+        print(display_psi[:Width * Height],              '= psi_opt first ambulance destinations')
+        print(display_psi[Width * Height:2*Width * Height], '= psi_opt 2nd ambulance destinations \n')
     return psi_opt

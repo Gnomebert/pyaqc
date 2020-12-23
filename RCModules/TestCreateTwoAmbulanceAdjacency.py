@@ -3,6 +3,7 @@ from PlatformConversion import *# print_QUBOdetails, CreateTwoAmbulanceAdjacency
 
 n_destinations = 5  
 gridWidth = 5
+test1(1)
 
 result = CreateTwoAmbulanceAdjacency(gridWidth, n_destinations, Adddistance = 1, remove_constraint=False)
 
