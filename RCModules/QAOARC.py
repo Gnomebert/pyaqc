@@ -6,7 +6,9 @@ from pyquil.api import local_forest_runtime
 from pyquil.gates import CNOT, I,Z,X,Y,RZ,RY,RX,H, SWAP, CSWAP, PHASE
 from pyquil import Program
 import numpy as np
-
+#def Energy_of_binary_state
+# def parity_even_p(state, marked_qubits)
+#def decimal_state_to_binary_reversed(state:'(type:int) decimal ref to a state qn...q0', n_qubits):]
 def Energy_of_binary_state(binary_state:'defined as list[qn...q0] or an interger', pauli_sum:' Pauli_sum eg 0.5-sZ(10',n_qubits):
     """
     Returns (type:float) the energy of the binary_state operating on the sum of Pauli terms,
@@ -77,7 +79,6 @@ def parity_even_p(state, marked_qubits):
     #RC case a) mask & state =  0b101 ie even so returns 0 case b) mask & state = 0b001 ie odd so returns 1
     # this is the correct outcome from an observable that is an edge
     return bin(mask & state).count("1") % 2 == 0
-
 def decimal_state_to_binary_reversed(state:'(type:int) decimal ref to a state qn...q0', n_qubits):
     """
 
