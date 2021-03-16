@@ -2,38 +2,29 @@
 #All functions in this file should not include any quantum computer specific code, eg not import qiskit nor import pyquil, nor import dimod
 def test1(x):
     if x:
-        print(x,' != 0')
+        print(x,' != 0 hi')
     else:
         print(x,' == 0')
 """
 Adjaceny_to_DWave_ising( qubo: 'Adjaceny table in dict form: qubo[(r,c)]', n_qubits):
 def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results for each starting betagamma'):
 def SaveList_as_txt_file(ListToSave, filename):
-
-def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint: bool =True,
-HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency table'=True ):
-
 def CreateTwoAmbulanceAdjacencyV2(gridWidth,n_destinations: 'Number of locations servied by ambulance fleet'= 5, Adddistance = 1
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0, use_XYMixer_constraints = 0 ):
-
 def CreateTwoAmbulanceAdjacencyV1(gridWidth,n_destinations: 'Number of locations servied by ambulance fleet'= 5, Adddistance = 1
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
-
 def CreateTwoAmbulanceAdjacency(gridWidth,n_destinations: 'Number of locations servied by ambulance fleet'= 5, Adddistance = 1
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
-
 def distance(r1,c1,r2,c2):
 def co_ord(qubit,Height, Width,Feature_options):
 """
 def Adjaceny_to_DWave_ising( qubo: 'Adjaceny table in dict form: qubo[(r,c)]', n_qubits):
     """
     Returns: linear, quadratic (type: dicts) that are required by the DWave function BinaryQuadraticModel.from_ising(linear, quadratic)
-
     DWave Ising model needs: linear, quadratic;
     eg:     linear =  {0: -1, 1: -1, 2: -1}
     and:    quadratic = {(0, 1): 1, (0, 2): 1, (1, 2): 1}
     DWave qubo model needs: qubo            eg qubo = {(0, 0): -1, (0, 1): 1, (0, 2): 1, (1, 1): -1, (1, 2): 1, (2, 2): -1}
-
     """
     #Create parameters for the Ising model in Dwave
     linear = {0:1.0}#   Node strength
@@ -55,7 +46,6 @@ def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results f
                             [-1050.451, 0.195, 4.0, [0.868, 0.876], [0.131, 0.932]  ],      #FIRST line in the .txt
                             [-1050.451, 0.195, 4.0, [0.868, 1,0.876], [0.131,2, 0.932]  ]   #SECOND line in the .txt
                                                                                     ])
-
     creates a file called 'temp.txt' whose first line is
     -1050.451, 0.195, 4.0, [0.868, 0.876], [0.131, 0.932]
     and second line is
@@ -136,23 +126,18 @@ def print_QUBOdetails(quboUnordered: 'dict of edge and nodes', n_qubits, filenam
         print('\n')
  
    
-def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint: bool =True,
-HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency table'=True ):
+def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint =True,
+HammingWeightOfConstraint=1, qubo_model=True ):
     """
+    
     Returns a 2d dict: type {(0,0):0}. n_qubits * n_qubits,  of an adjacency table for the ambulance problem. 
      
     HammingWeightOfConstraint = 2 sets as a constraint the number of 1s in the solution to 2.
-
     remove_constraint: type bool = True , removes the constraint(number of ambulances) from the adjacency table.
-
-    Adddistance: type bool = False, removes the distance between nodes from the adjacency table
-
+    Adddistance: type bool = True, removes the distance between nodes from the adjacency table
     qubo_model:type bool = True, when True the adjacency is based on a qubo model of edges and nodes, otherwise Ising model
     """
-    #Specify the dimensions of the location grid - use 2*2 grid to understand method of creation
-
-    Width  = gridWidth
-    Height = n_qubits // gridWidth
+    
     # CONSTRAINTS are calculated differently for a binary/qubo model (x= 0 or 1), than for a spin/Ising model (x= -1 or 1)
     if qubo_model :       #QUBO
         linearWt = 1-2* HammingWeightOfConstraint               # this is the constraint condition for a binary/qubo model (x= 0 or 1)
@@ -170,9 +155,7 @@ HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency
                     Adjacency[(r,c)] = linearWt
             elif c > r :
                 if Adddistance :
-                        r0,c0 = co_ord(r,Height,gridWidth)
-                        r1,c1 = co_ord(c,Height,gridWidth)
-                        coeff =  - distance(r0,c0, r1,c1)  # distance assumes all qubits are evenly space in a grid structure
+                        coeff = - distance(r,c, n_qubits,gridWidth)  # distance assumes all qubits are evenly space in a grid structure
                         if remove_constraint==0:
                             coeff +=  ConstraintMultiplier*quadWt
                 else:
@@ -302,9 +285,7 @@ def CreateTwoAmbulanceAdjacencyV1(gridWidth,n_destinations: 'Number of locations
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
     """
     Returns: type dict result={'qubo':qubo, 'quboHybrid':quboHybrid, 'n_qubits':n_qubits, 'ConstraintMultiplier':ConstraintMultiplier,'max_distance': max_distance, 'sum_distance':sum_distance}
-
     Returns: type dict eg  result['qubo']={(0,3):4}, is an edge of weight 4 between qubits 0 and 3.  QUBO to represent the ising ambulance problem, it involves two constraints and minimising distance driven.
-
 ################# DESCRIPTION OF THE ISING PROBLEM #################
 BINARY/qubo MODEL  
 This splits the geography into Width*Height (W*H) qubits, and mininises the distance from...
@@ -415,9 +396,7 @@ def CreateTwoAmbulanceAdjacency(gridWidth,n_destinations: 'Number of locations s
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
     """
     Returns: type dict result={'qubo':qubo, 'quboHybrid':quboHybrid, 'n_qubits':n_qubits, 'ConstraintMultiplier':ConstraintMultiplier,'max_distance': max_distance, 'sum_distance':sum_distance}
-
     Returns: type dict eg  result['qubo']={(0,3):4}, is an edge of weight 4 between qubits 0 and 3.  QUBO to represent the ising ambulance problem, it involves two constraints and minimising distance driven.
-
 ################# DESCRIPTION OF THE ISING PROBLEM #################
 BINARY/qubo MODEL  
 This splits the geography into Width*Height (W*H) qubits, and mininises the distance from...
@@ -534,7 +513,7 @@ def distance(r1,c1,r2,c2):
 # return (np.sqrt(x+y))
 
 
-def co_ord(qubit,Height, Width,Feature_options=None):
+def co_ord(qubit,Height, Width,Feature_options):
     """return type:int,int  row, column in the position grid of dimension Width * Height from the qubit number , and which of 4 features is stored there
     r,c describes what location the feature_num is attached to.
     """
@@ -542,7 +521,5 @@ def co_ord(qubit,Height, Width,Feature_options=None):
     feature_num = qubit//( Width * Height)
     r = (qubit//Width) %  Height      # // means division followed by integer truncation
     c= qubit % Width
-    if Feature_options==None:
-        return r,c
-    else:
-        return Feature_options[feature_num],r,c
+
+    return Feature_options[feature_num],r,c
