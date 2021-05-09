@@ -92,9 +92,11 @@ def decimal_state_to_binary_reversed(state:'(type:int) decimal ref to a state qn
     # convert Decimal to binary representation in a list of length n_qubits
     psi_opt = []
     state_string = ''
+    #first find the zeros in the binary state...
     zeros =  n_qubits - len (bin(state)[2:])        # missing 0s to ensure the state description is n_qubits long
     for p in range(0,zeros):
         psi_opt.append(0)
+    # ...then add the first none zero bit and all subseqent bits
     psi_opt.extend([int(n) for n in bin(state)[2:]]) 
     psi_opt.reverse()  # defined as [q0...qn] this is the list to be returned
     # and into a string defined as 'q0...qn'
