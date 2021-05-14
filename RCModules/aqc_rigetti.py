@@ -17,7 +17,7 @@ def create_ring_mixer(n_qubits):
 
 def Adjacency_Ising_to_Regetti( Adjacency: 'Adjacency table in form: qubo[(r,c)]', n_qubits):
 def Adjacency_qubo_to_Regetti( Adjacency: 'Adjacency  table in form: qubo[(r,c)]', n_qubits):
-
+ 
 """
 def Dicke_state_local( 
 p: 'Type:Program()',
@@ -155,7 +155,7 @@ def create_ring_mixer(n_qubits):
     
     return create_local_ring_mixer( qudit_start=0, qudit_end=n_qubits-1)
 # Open each line in the file and format the line as a list, then add that list to the DataOut list [[line1],  [line2]]
-def Adjacency_qubo_to_Regetti( Adjacency: 'Adjacency  table in form: qubo[(r,c)]', n_qubits):
+def Adjacency_qubo_to_Regetti( Adjacency:"Adjacency table in form: qubo[(r,c)]", n_qubits):
     """
     Returns: ListPauli_termsMy (type:lists[pauli_sum]),and SumPauli_termsMy (type: pauli_sum)  that are required by the Rigetti function;
 
