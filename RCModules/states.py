@@ -43,7 +43,7 @@ def distance(i:'first qubit',j:'second qubit',n_qubits,gridWidth:'use a grid wid
     y = (i//gridWidth - j//gridWidth)**2
     x = (i%gridWidth - j%gridWidth)**2
     return (x+y)                    #distance squared
-"""def print_details(quboUnordered,n_qubits,name):
+def print_details(quboUnordered,n_qubits,name):
     #Print adjacency graph of weights Wij between one qubit index (Qi)  and another (Qj)
     i = 0                                   # index of row of adjacency matrix
     j = 0                                   # index of column
@@ -70,7 +70,7 @@ def distance(i:'first qubit',j:'second qubit',n_qubits,gridWidth:'use a grid wid
             print('\t', end='')
         j = pos[1]
         print(weight, end='')   
-"""
+
 #'type:int number of qubits in the system '
 
 #from pyquil.paulis import *
