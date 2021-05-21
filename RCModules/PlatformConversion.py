@@ -24,6 +24,8 @@ def CreateTwoAmbulanceAdjacency(gridWidth,n_destinations: 'Number of locations s
 
 def distance(r1,c1,r2,c2):
 def co_ord(qubit,Height, Width,Feature_options):
+def interp_TT2(Betagamma_angles, p_step=1):
+def interp1(Betagamma_angles, adjust = False): 
 """
 def Adjaceny_to_DWave_ising( qubo: 'Adjaceny table in dict form: qubo[(r,c)]', n_qubits):
     """
@@ -546,3 +548,65 @@ def co_ord(qubit,Height, Width,Feature_options=None):
         return r,c
     else:
         return Feature_options[feature_num],r,c
+
+def interp_TT2(Betagamma_angles, p_step=1):
+    """
+    This function implements the TT increasing p strategy
+    It assumes that Betagamma_angles is the result of an optimisation run and then generates the initial starting angles
+    for a p + p_step run based on the method set out, i.e. adds 0.0 p_step times to each of beta and gamma angles
+    """
+    length = 0
+    length = len(Betagamma_angles)
+    if length % 2 != 0:
+        print ("Betagamma not an even number!")
+        return
+    step1 = int(length/2)
+    beta = Betagamma_angles[0:step1]
+    gamma = Betagamma_angles[step1:length]
+    for i in range(p_step):
+        beta.append(0.0)
+        gamma.append(0.0)
+    betagamma_p_plus_1 = beta + gamma
+    return betagamma_p_plus_1
+def interp1(Betagamma_angles, adjust = False):  
+    
+    """
+    This function implements the INTERP strategy described by Zhou et al in their 2019 paper
+    QAOA: Performance, Mechanism and Implementation on Near-term Devices
+    It assumes that Betagamma is the result of an optimisation run and then generates the initial starting angles
+    for a p+1 steps run based on the method set out
+    """
+    length = 0
+    length = len(Betagamma_angles)
+    if length % 2 != 0:
+        print ("Betagamma not an even number!")
+        return
+    step1 = int(length/2)
+    beta = Betagamma_angles[0:step1]
+    gamma = Betagamma_angles[step1:length]
+    beta_int = []
+    gamma_int = []
+    beta_int.append(0)
+    gamma_int.append(0)
+    for j in range(len(beta)):
+        beta_int.append(beta[j])
+        gamma_int.append(gamma[j])
+    beta_int.append(0)
+    gamma_int.append(0)
+    #print(beta_int, gamma_int)
+    betagamma_p_plus_1 = []
+    for i in range(1, step1 + 2):
+        #print(i, ((i-1)/step1)*(beta_int[i-1]),  ((step1-i+1)/step1)*beta_int[i] )
+        next_beta = ((i-1)/step1)*(beta_int[i-1]) + ((step1-i+1)/step1)*beta_int[i]
+        betagamma_p_plus_1.append(next_beta)
+    for i in range(1, step1 + 2):
+        #print(i, ((i-1)/step1)*(gamma_int[i-1]),  ((step1-i+1)/step1)*gamma_int[i] )
+        next_gamma = ((i-1)/step1)*(gamma_int[i-1]) + ((step1-i+1)/step1)*gamma_int[i]
+        betagamma_p_plus_1.append(next_gamma)
+    betagamma_p_plus_2 = []
+    if adjust == True:
+        adj_fact = step1/(step1 + 1)
+        for i in range(len(betagamma_p_plus_1)):
+            betagamma_p_plus_2.append(betagamma_p_plus_1[i]*adj_fact)
+        return betagamma_p_plus_2
+    return betagamma_p_plus_1
