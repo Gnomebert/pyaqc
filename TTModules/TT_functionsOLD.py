@@ -1,3 +1,4 @@
+
 # This is a file of functions created by TT and saved so that they can be imported as a module #
 # The function list in this file is
 # CreateTwoAmbulanceAdjacency_TT
@@ -9,17 +10,10 @@
 # AppendListTxt_TT
 # AppendListTxt     Original RC open file Append function for saving a new result to an existing file
 # print_details     Original RC print details function
-# Ham_wt_of_string(string)  RC function to calculate the Hamming weight of a string
-# Expect_of_state(state:int, MyCostHam,n_qubits)  RC function which calculates the Expectation value for a given state for a cost function: MyCostHam
 
 import numpy as np
-from pyquil.api import WavefunctionSimulator
+
 import ast
-from pyquil import Program
-from pyquil import *
-from pyquil.gates import *
-import numpy as np
-from pyquil.paulis import ID, sZ, sX, sY , exponential_map, exponentiate_commuting_pauli_sum
 
 def CreateTwoAmbulanceAdjacency_TT(gridWidth,n_destinations: 'Number of locations servied by ambulance fleet'= 5, Adddistance = 1
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
@@ -27,7 +21,9 @@ def CreateTwoAmbulanceAdjacency_TT(gridWidth,n_destinations: 'Number of location
     This is a variation of the original Adjacency function but uses the square of the previous distance function instead, resulting in bigger differences between the location positions and may result in better optimiser performance in finding low energy states
    
     Returns: type dict result={'qubo':qubo, 'quboHybrid':quboHybrid, 'n_qubits':n_qubits, 'ConstraintMultiplier':ConstraintMultiplier,'max_distance': max_distance, 'sum_distance':sum_distance}
+
     Returns: type dict eg  result['qubo']={(0,3):4}, is an edge of weight 4 between qubits 0 and 3.  QUBO to represent the ising ambulance problem, it involves two constraints and minimising distance driven.
+
 ################# DESCRIPTION OF THE ISING PROBLEM #################
 BINARY/qubo MODEL  
 This splits the geography into Width*Height (W*H) qubits, and mininises the distance from...
@@ -171,6 +167,8 @@ def SaveListTxt_TT(filename: '.txt file', file_details: 'Dict specifying details
                             [-1050.451, 0.195, 4.0, [0.868, 0.876], [0.131, 0.932]  ],      #FIRST line in the .txt
                             [-1050.451, 0.195, 4.0, [0.868, 1,0.876], [0.131,2, 0.932]  ]   #SECOND line in the .txt
                                                                                     ])
+
+
     creates a file called 'temp.txt' whose first line is a Dict 
     Ansatz_type, e.g. {'n_qubits': 16, 'p': 2, 'Mixer': 0, 'prog_init': 'Pure start state |HHHHHHHHHHHHHHHH>', 'ConstraintMultiplier': 90, 'remove_constraint': 0, 'Optimizer_maxiter': 10}
     and second line is
@@ -197,6 +195,7 @@ def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results f
                             [-1050.451, 0.195, 4.0, [0.868, 0.876], [0.131, 0.932]  ],      #FIRST line in the .txt
                             [-1050.451, 0.195, 4.0, [0.868, 1,0.876], [0.131,2, 0.932]  ]   #SECOND line in the .txt
                                                                                     ])
+
     creates a file called 'temp.txt' whose first line is
     -1050.451, 0.195, 4.0, [0.868, 0.876], [0.131, 0.932]
     and second line is
@@ -213,6 +212,8 @@ def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results f
 def OpenListTxt_TT(filename, decimal_places=3):
     """
     Filename is presumed to be headed by a Dict followed by a list containing numbers and lists
+
+    returns convertedDict, DataOut
     """
     import ast
     f = open(filename, "r+")        #does not erase file just reads it.
@@ -345,45 +346,3 @@ def print_details(quboUnordered,n_qubits,name):
             print('\t', end='')
         j = pos[1]
         print(weight, end='')   
-
-def Ham_wt_of_string(string):
-    h=0
-    for m in range(len(string)):
-        h +=int(string[m])
-    return h
-
-def Expect_of_state(state:int, MyCostHam, n_qubits):
-    """
-    #return (type: float) expectation of a single binary quantum state applied to MyCostHam (type:list of pauli_term or pauli_sum)
-
-    # state int      such that bin(state)=          |qn...q0>  expressed as a string eg '0b111'
-    #Method uses the analytic WavefunctionSimulator().expectation() not a sampling approach
-    """
-    prog_init = Program()
-    # From decimal generate sequential binarys to describe a state 001,010,011..etc
-    
-    state_string = ''
-    
-    if isinstance(state, int):
-        # convert Decimal to binary representation in a list of integers of length n_qubits
-        zeros =  n_qubits - len (bin(state)[2:])        # missing 0s to ensure the state description is n_qubits long
-        psi_opt = []
-        for p in range(0,zeros):
-            psi_opt.append(0)
-        psi_opt.extend([int(n) for n in bin(state)[2:]])
-        for elem in reversed(psi_opt):
-            state_string += str(elem)
-        state = psi_opt
-    #print(psi_opt)
-    for n, q in enumerate(reversed(state)) :
-        if q==1:
-            prog_init += X(n)
-        
-    expectation_weighted_sum = 0
-    #print(prog_init)
-    for nth_obs in range( len(MyCostHam)):    
-            expectation = WavefunctionSimulator().expectation(prep_prog=prog_init, pauli_terms=MyCostHam[nth_obs])
-            expectation_weighted_sum += expectation 
-            if state==0 and 0:
-                print('{0:18} {1:}'.format(expectation,expectation_weighted_sum), end=' ')
-    return np.real(expectation_weighted_sum)
