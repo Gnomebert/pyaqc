@@ -212,6 +212,8 @@ def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results f
 def OpenListTxt_TT(filename, decimal_places=3):
     """
     Filename is presumed to be headed by a Dict followed by a list containing numbers and lists
+
+    returns convertedDict, DataOut
     """
     import ast
     f = open(filename, "r+")        #does not erase file just reads it.
