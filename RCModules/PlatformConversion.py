@@ -555,7 +555,6 @@ def interp_TT2(Betagamma_angles, p_step=1):
     It assumes that Betagamma_angles is the result of an optimisation run and then generates the initial starting angles
     for a p + p_step run based on the method set out, i.e. adds 0.0 p_step times to each of beta and gamma angles
     """
-    length = 0
     length = len(Betagamma_angles)
     if length % 2 != 0:
         print ("Betagamma not an even number!")
@@ -576,7 +575,6 @@ def interp1(Betagamma_angles, adjust = False):
     It assumes that Betagamma is the result of an optimisation run and then generates the initial starting angles
     for a p+1 steps run based on the method set out
     """
-    length = 0
     length = len(Betagamma_angles)
     if length % 2 != 0:
         print ("Betagamma not an even number!")

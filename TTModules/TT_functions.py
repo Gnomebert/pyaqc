@@ -209,6 +209,14 @@ def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results f
         f.writelines('\n')              #marks the end of a line
     f.close()
 
+def is_number(s):
+    """" Return True if s is a number not a string
+        type:bool"""
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def OpenListTxt_TT(filename, decimal_places=3):
     """
@@ -224,6 +232,7 @@ def OpenListTxt_TT(filename, decimal_places=3):
     dict_str = string[0]
     convertedDict = ast.literal_eval(dict_str)
     string1 = string[1:]
+    print(len(string1), 'string1')
     for n, line in enumerate(string1):
         #print('n', n, line, 'line')#, end='')
         line.rstrip()
@@ -237,13 +246,13 @@ def OpenListTxt_TT(filename, decimal_places=3):
                     y = x.strip('[')
                     y = y.strip(']')
                     y = y.strip(',')
-                    sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                    if is_number(y):sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
                     if x.rfind(']') >=0:                #end of a sub_list
                         listfnd -= 1        # SUB number of ]
                         list_of_new_line.append(sub_list)
                         sub_list = []
                 else:
-                    list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
+                    if is_number(x):list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
             else:
                 DataOut.append( list_of_new_line)
     f.close()
