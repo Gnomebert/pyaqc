@@ -218,7 +218,7 @@ def is_number(s):
     except ValueError:
         return False
 
-def OpenListTxt_TT(filename, decimal_places=3):
+def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
     """
     Filename is presumed to be headed by a Dict followed by a list containing numbers and lists
     """
@@ -232,7 +232,7 @@ def OpenListTxt_TT(filename, decimal_places=3):
     dict_str = string[0]
     convertedDict = ast.literal_eval(dict_str)
     string1 = string[1:]
-    print(len(string1), 'string1')
+    if prt_len: print(len(string1), 'string1')
     for n, line in enumerate(string1):
         #print('n', n, line, 'line')#, end='')
         line.rstrip()
