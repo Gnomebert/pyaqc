@@ -146,7 +146,7 @@ def create_local_ring_mixer( qudit_start:'FIRST qubit in ring mixer'=0, qudit_en
             XYmixer += 0.5*sX(a)*sX(a+1) + 0.5*sY(a)*sY(a+1)
     if 1:   # 1 for ring mixer, 0 for 'Line'
         XYmixer += 0.5*sX(qudit_start)*sX(qudit_end) + 0.5*sY(qudit_start)*sY(qudit_end)      
-    #XYmixer = 0.5*sX(0)*sX(n_qubits) + 0.5*sY(0)*sY(n_qubits)           #old seemed to work but adds XY0,n_qubits
+    
     return XYmixer
 def create_ring_mixer(n_qubits):
     """
