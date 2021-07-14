@@ -6,6 +6,10 @@ from datetime import datetime
 
 def qubo_energy_value(ψ, qubo):
     E=0
+    if isinstance(ψ, str) :
+        ψ=ψ.replace(' ','')
+        ψ = [int(ψ[q]) for q in range(len(ψ) )]
+
     for qubo_pos, weight in qubo.items():   #qubo_pos(q1,q2)
         E += ψ[qubo_pos[0]] * ψ[qubo_pos[1]] * weight                               #Calc energy of the Ising nodes with weights contained in linear
     return E
