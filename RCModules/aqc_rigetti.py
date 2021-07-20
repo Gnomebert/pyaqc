@@ -19,6 +19,7 @@ p: 'Type:Program()',
 qudit_start:'FIRST qubit in ring mixer(Type: int)'=0, 
 qudit_end: 'LAST qubit in ring mixer (Type: int)'=2,  HWeight: 'int'=1):
 def Dicke_state(n_qubits: int , HWeight: int):
+def three_XYMixers_Dicke_states(n_qubits, n_destinations,init_state=None)
 
 def create_local_ring_mixer( qudit_start:'FIRST qubit in ring mixer'=0, qudit_end:'LAST qubit in ring mixer'=2):
 def create_ring_mixer(n_qubits):
@@ -295,6 +296,60 @@ Rotation angle for rth rotation in that chapter
                     p += RY(2*np.arccos(np.sqrt(r/(noted_qubit + 1)) ), rotated_qubit).controlled(noted_qubit).controlled(rotated_qubit+1)
                 p +=CNOT(rotated_qubit,noted_qubit)
     return p
+def three_XYMixers_Dicke_states(n_qubits, n_destinations,init_state=None):
+    """
+    Return (type:paulisum) observeable that when exponentiated represents the Phase separating Hamiltonian of an Ansatz
+
+    para 'init_state', when set there is a single hamming weight init_prog in state=(init_state) rather that a Dickie even superpostion of all similar HW states.
+    type:string of a state. example '1110111'
+        """
+    init_prog0 = Program()
+    for num_q in range(n_qubits):
+        init_prog0 += I(num_q)
+    XYmixer = 0
+    # DESTINATIONS Make XYmixer0 and Dicke state for subcircuit:
+    XYmixer_list = []
+    qudit_start = 0
+    qudit_end = qudit_start + 2 * n_destinations-1
+    HW = n_destinations
+    if init_state== None:
+        init_prog1 = Dicke_state_local(init_prog0, qudit_start, qudit_end, HW)
+    else:
+        init_prog1 = fixed_hw_states(init_prog0, qudit_start, qudit_end, HW, init_state='11000011')
+        
+    # XY to constrain the number of destinations service to n_destinations
+    # Create xyMixer0, which will be rotated/exponentiated by beta0 and will have a HW dickie state of n_destinations
+    XYmixer_list.append( create_local_ring_mixer(qudit_start, qudit_end))
+
+    ## START_A0 : Make XYmixer1 and Dicke state for subcircuit:
+
+    qudit_start = qudit_end + 1
+    qudit_end = qudit_start +  n_destinations-1
+    HW=1
+    #init_prog2 = Dicke_state_local(init_prog1, qudit_start, qudit_end, HW)
+    if init_state== None:
+        init_prog2 = Dicke_state_local(init_prog1, qudit_start, qudit_end, HW)
+    else:
+        init_prog2 = fixed_hw_states(init_prog1, qudit_start, qudit_end, HW, init_state='1000')
+        
+    # Create xyMixer1, which will be rotated/exponentiated by beta1 and will have a HW dickie state of 1
+    XYmixer_list.append(create_local_ring_mixer(qudit_start, qudit_end))
+
+    qudit_start = qudit_end + 1
+    qudit_end = qudit_start +  n_destinations-1
+    HW = 1
+    #init_prog = Dicke_state_local(init_prog2, qudit_start, qudit_end, HW)
+    if init_state== None:
+        init_prog = Dicke_state_local(init_prog2, qudit_start, qudit_end, HW)
+    else:
+        init_prog = fixed_hw_states(init_prog2, qudit_start, qudit_end, HW, init_state='0001')
+        
+    ##  START_A1 :Make XYmixer2 and Dicke state for subcircuit:
+
+    XYmixer_list.append(create_local_ring_mixer(qudit_start, qudit_end))
+    
+    return XYmixer_list, init_prog
+
 def create_local_ring_mixer( qudit_start:'FIRST qubit in ring mixer'=0, qudit_end:'LAST qubit in ring mixer'=2):
     """
     returns (type: Pauli_sum) a sum of observables that correspond to a ring_mixer with qubits from qudit_start to qudit_end
