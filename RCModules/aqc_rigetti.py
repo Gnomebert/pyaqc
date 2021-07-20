@@ -5,7 +5,15 @@ from pyquil.gates import *
 import numpy as np
 from pyquil.api import WavefunctionSimulator
 from pyquil.paulis import ID, sZ, sX, sY , exponential_map, exponentiate_commuting_pauli_sum
+from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
 """
+# Function alternative to Rigetti's QAOA()
+def ansatz_init_XYMixer( BetaGamma, ListPauli_termsMy, n_qubits, n_destinations,p, XY_or_Xmixer_list):
+def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations,   p:'p'):
+def ansatz_prog_init(  pauli_cost_terms_list, n_qubits, n_destinations,   p:'p'=1):
+def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits, Adjacency_constraint=None, state_feasible=None):
+def min_energy( Adjacency, n_qubits, state_feasible=None):
+
 def Dicke_state_local( 
 p: 'Type:Program()',
 qudit_start:'FIRST qubit in ring mixer(Type: int)'=0, 
@@ -19,6 +27,157 @@ def Adjacency_Ising_to_Regetti( Adjacency: 'Adjacency table in form: qubo[(r,c)]
 def Adjacency_qubo_to_Regetti( Adjacency: 'Adjacency  table in form: qubo[(r,c)]', n_qubits):
  
 """
+def ansatz_init_XYMixer( BetaGamma, pauli_cost_terms_list, n_qubits, n_destinations,p, XY_or_Xmixer_list):
+    """
+    param  initial_angle  eg # uses betagammon = [beta0,beta1, beta2, ,gamma0, gamma1,gamma2]. Note there is ONE beta  for each gamma. 
+        Type: list float
+    'pauli_cost_terms_list'     A list of the terms of each edge in the Adjacency. This must not be a sum of all the terms
+        Type:list of pauli observables
+    param n_destinations  the number of ambulance destinations 
+        Type:int
+    param XY_or_Xmixer_list A Pauli list for a ringmixer or an Xmixer
+    Returns prog , p repeats of ,  exponentials of the cost paulisums in  XYmixer_list, then in SumPauli_termsMy (cost terms).
+        Type: Program() 
+    """
+    #Check the correct number of angles have been supplied (1 beta and 1 gamma per p, )
+    beta_list = BetaGamma[0:p  ]  
+    if 2* p != len( BetaGamma):
+        raise AssertionError( 'Number of angles supplied:',len( BetaGamma), 'do not match the 2*p', 2* p)
+    prog = Program() 
+    gamma_list = BetaGamma[p:  ]
+    if 0: print(gamma_list, ' = gamma_list')
+    SumPauli_all_terms = 0
+    for pauli_sum in pauli_cost_terms_list:     
+        SumPauli_all_terms += pauli_sum
+    for pn in range(p):        
+        for term in SumPauli_all_terms:                       #SumPauli_termsMy
+            prog +=exponential_map(term)(gamma_list[pn])     #gamma_i rotations one for each edge in the ring mixer per p
+        for n, XYmixer in enumerate( XY_or_Xmixer_list) :
+             for termXY in XYmixer:
+                    prog +=exponential_map(termXY)(beta_list[pn])
+        
+    return prog
+def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations,   p, MyMixerHam):
+    """
+    Returns (type: python function) that takes 'initial_angle' as a parameter and returns the expectation of the ansatz at that angle
+    param 
+        'pauli_cost_terms_list'     A list of the terms of each edge in the Adjacency. This must not be a sum of all the terms
+        'prog_init' The initial program, eg a series of Hadamard gates, or a fixed Hamming weight program, or a Dickie state.
+    """
+    SumPauli_all_terms = 0
+    for pauli_sum in pauli_cost_terms_list:     
+        SumPauli_all_terms += pauli_sum
+    def ansatz_EV( initial_angle ):
+        #prog = prog_init + ansatz_init_XYMixer(initial_angle,pauli_cost_terms_list, n_qubits, n_destinations, p,MyMixerHam )
+        prog = prog_init + ansatz_init_XYMixer(initial_angle,SumPauli_all_terms, n_qubits, n_destinations, p,MyMixerHam )
+        EV = WavefunctionSimulator().expectation(prep_prog=prog, pauli_terms=SumPauli_all_terms)
+        #EV = WavefunctionSimulator().expectation(prep_prog=Known_state_sol, pauli_terms=pauli_cost_terms)
+        #print(prog)
+        return np.real(EV  )        #convert the potentially complex number to its real component
+
+    return ansatz_EV
+def ansatz_prog_init(prog_init, pauli_cost_terms_list, n_qubits, n_destinations,   p,MyMixerHam):
+    """
+    Returns the name of a function ansatz_prog. When called with an angle, for example; ansatz_prog( initial_angle ), 
+    type: Rigetti Program
+    It  represents the Ansatz ( cost Phase, and mixer), excluding the initial state.
+    param MyMixerHam is a list of Pauli operators, which can be X or XY operators
+    """
+    def ansatz_prog( initial_angle ):
+        return prog_init + ansatz_init_XYMixer(initial_angle,pauli_cost_terms_list, n_qubits, n_destinations, p ,MyMixerHam)
+
+    return ansatz_prog
+
+def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=None, state_feasible=None, prt_details=False):
+    """
+    return  A) the cumulative probability of the lowest energy state sampled, 
+            B) 'approx_ratio' from the feasible states, (defined as states that minimize 'Adjacency_constraint') the average energy calculated without any constraint energy / ground state energy.
+                    Or -1 if 'Adjacency_constraint' is not supplied
+                    As defined by Wang in arXiv:1904.09314v2 [quant-ph] 21 May 2020, page 3 col 2
+                    When the ground state without constraints is positive the reciprocal of 'approx_ratio' is calculated
+    type: float,float
+
+    param
+        ansatz_prog
+            type:function that returns a Rigetti.Program()
+    kwargs
+        
+        'Adjacency_constraint'  The adjacency table which contain only the constraint energies (Hard constraints), and no Soft constraints (eg distance)
+            type: dict example {(0, 0): 5,  (1, 1): -1,  (2, 2): -1}
+        This is required to calculate the approximation ratio
+        'state_feasible' a string of a state that complies with all the constraints in Adjacency_constraint. For example;  '11011'.capitalize. 
+            type: string of a binary state
+        This speeds up the approximation ratio calculation
+        
+    """
+    prob_gnd_state = 0
+    prob_feasible_state = 0
+    EV_feasible = 0 
+    approx_ratio = -1
+    EV_min = 1000000000000000000000000
+    # EV of state '00...00'
+    #EV_min = Energy_of_binary_state( state_str, SumPauli_termsMy,n_qubits)
+    solution_ansatz = ansatz_prog(opt_betagamma)        #   dict {state_i:prob_i}
+    n_feasible=0
+    
+    if not Adjacency_constraint==None: 
+           
+        min_energy_constraint = min_energy( Adjacency_constraint, n_qubits, state_feasible=state_feasible.replace(' ',''))
+        ListPauli_terms_constr,SumPauli_termsMy_constr  = Adjacency_qubo_to_Regetti( Adjacency_constraint, n_qubits)
+    probsAbsolute  = WavefunctionSimulator().wavefunction(solution_ansatz).get_outcome_probs()
+    opt_probs_absolute = [x for x in probsAbsolute.values()]
+    for n in range(2**n_qubits):
+        if opt_probs_absolute[n] > 0.00001 :    #|qn...q0>
+            
+            # calculation of energy, using n as the state, NOT recalculating the state by building its quantum circuit eg Program(X(0),I(1))
+            Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)
+
+            if Expectation_of_state <= EV_min:   
+                
+                psi_opt, state_string = decimal_state_to_binary_reversed(n,n_qubits)
+                if Expectation_of_state < EV_min:
+                    prob_gnd_state = 0
+                prob_gnd_state += opt_probs_absolute[n]
+                EV_min = Expectation_of_state
+            if not Adjacency_constraint==None:
+                # If the Adjacency_constraint has an energy that is the minimium possible, the Hard constraints have been met..
+                #...then the energy calculated without any constraint energy is averaged
+                if Energy_of_binary_state( n, SumPauli_termsMy_constr, n_qubits) == min_energy_constraint:
+                    EV_feasible += opt_probs_absolute[n] * (Expectation_of_state - min_energy_constraint)
+                    prob_feasible_state +=opt_probs_absolute[n]
+                    n_feasible +=1
+                    #print(opt_probs_absolute[n] , (Expectation_of_state - min_energy_constraint),EV_feasible)
+                    if (EV_feasible/prob_feasible_state < 2 or (Expectation_of_state - min_energy_constraint) <2) and 0:
+                        print(EV_feasible/prob_feasible_state, 'cum wt avg')
+                        print(n,str(bin(n)[2:]) ,'is feasible',min_energy_constraint,(Expectation_of_state - min_energy_constraint))
+    if not prob_feasible_state==0:
+        
+        approx_ratio = EV_feasible/(prob_feasible_state * (EV_min-min_energy_constraint) )
+        if (EV_min-min_energy_constraint) > 0:
+            approx_ratio = 1/approx_ratio
+    if prt_details:
+        print(EV_feasible/prob_feasible_state, ' = EV_feasible/prob_feasible_state,', EV_min, ' = EV_min,', min_energy_constraint, ' = min_energy_constraint.',prob_feasible_state, ' =prob_feasible_state,',n_feasible, ' = n_feasible,')
+    return prob_gnd_state, approx_ratio
+
+def min_energy( Adjacency, n_qubits, state_feasible=None):
+    """
+    Return  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR is state_feasible is supplied the adjaceny's energy in that state
+    type:float
+    """
+
+    ListPauli_terms_constr,SumPauli_termsMy_constr  = Adjacency_qubo_to_Regetti( Adjacency, n_qubits)
+    min_energy_constraint = Energy_of_binary_state( 0, SumPauli_termsMy_constr,n_qubits)
+    if state_feasible==None:
+        for n in range(2**n_qubits):
+            min_energy_constraint = min(min_energy_constraint,Energy_of_binary_state( n, SumPauli_termsMy_constr,n_qubits))
+    else:
+        if not len(state_feasible)== n_qubits:
+            raise AssertionError('In get_gnd_state_probs_and_approx_ratio() call to min_energy(), len(state_feasible)',len(state_feasible), 'does not equal', n_qubits, 'n_qubits')
+        feasible_int = int(state_feasible,2)        #convert binary string in base 2 to integer base 10
+        min_energy_constraint = min(min_energy_constraint,Energy_of_binary_state( feasible_int, SumPauli_termsMy_constr,n_qubits))
+    #print(min_energy_constraint)
+    return min_energy_constraint
+
 def Dicke_state_local( 
 p: 'Type:Program()',
 qudit_start:'FIRST qubit in ring mixer(Type: int)'=0, 
