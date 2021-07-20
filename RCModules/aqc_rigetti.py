@@ -19,6 +19,7 @@ p: 'Type:Program()',
 qudit_start:'FIRST qubit in ring mixer(Type: int)'=0, 
 qudit_end: 'LAST qubit in ring mixer (Type: int)'=2,  HWeight: 'int'=1):
 def Dicke_state(n_qubits: int , HWeight: int):
+def fixed_hw_states(init_prog0, qudit_start, qudit_end, HW, init_state='000111')
 def three_XYMixers_Dicke_states(n_qubits, n_destinations,init_state=None)
 
 def create_local_ring_mixer( qudit_start:'FIRST qubit in ring mixer'=0, qudit_end:'LAST qubit in ring mixer'=2):
@@ -296,6 +297,20 @@ Rotation angle for rth rotation in that chapter
                     p += RY(2*np.arccos(np.sqrt(r/(noted_qubit + 1)) ), rotated_qubit).controlled(noted_qubit).controlled(rotated_qubit+1)
                 p +=CNOT(rotated_qubit,noted_qubit)
     return p
+def fixed_hw_states(init_prog0, qudit_start, qudit_end, HW, init_state='000111'):
+    """
+    return 'init_prog0' with a fixed hamming weight('HW') program state between qubits; qudit_start, qudit_end
+    """
+    num_q = qudit_start
+    if len(init_state) != qudit_end - qudit_start +1:
+        print('len(init_state) != qudit_end - qudit_start')
+    for pos, bit in enumerate(init_state):
+        if int(bit)==1 :
+            #print(bit)
+            init_prog0 += X(num_q+pos)    
+
+    return init_prog0
+
 def three_XYMixers_Dicke_states(n_qubits, n_destinations,init_state=None):
     """
     Return (type:paulisum) observeable that when exponentiated represents the Phase separating Hamiltonian of an Ansatz
