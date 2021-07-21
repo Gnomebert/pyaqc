@@ -9,8 +9,8 @@ from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_b
 """
 # Function alternative to Rigetti's QAOA()
 def ansatz_init_XYMixer( BetaGamma, ListPauli_termsMy, n_qubits, n_destinations,p, XY_or_Xmixer_list):
-def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations,   p:'p'):
-def ansatz_prog_init(  pauli_cost_terms_list, n_qubits, n_destinations,   p:'p'=1):
+def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations,   p,MyMixerHam):
+def ansatz_prog_init(prog_init,   pauli_cost_terms_list, n_qubits, n_destinations,   p,MyMixerHam):
 def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits, Adjacency_constraint=None, state_feasible=None):
 def min_energy( Adjacency, n_qubits, state_feasible=None):
 
@@ -97,6 +97,7 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
                     Or -1 if 'Adjacency_constraint' is not supplied
                     As defined by Wang in arXiv:1904.09314v2 [quant-ph] 21 May 2020, page 3 col 2
                     When the ground state without constraints is positive the reciprocal of 'approx_ratio' is calculated
+            C) The probability that one of the suggested states is a feasible state(ie complies with all constraint )
     type: float,float
 
     param
@@ -104,7 +105,7 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
             type:function that returns a Rigetti.Program()
     kwargs
         
-        'Adjacency_constraint'  The adjacency table which contain only the constraint energies (Hard constraints), and no Soft constraints (eg distance)
+        'Adjacency_constraint'  The adjacency table which contain only the constraint energies , and no Soft constraints (eg distance)
             type: dict example {(0, 0): 5,  (1, 1): -1,  (2, 2): -1}
         This is required to calculate the approximation ratio
         'state_feasible' a string of a state that complies with all the constraints in Adjacency_constraint. For example;  '11011'.capitalize. 
@@ -159,7 +160,7 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
             approx_ratio = 1/approx_ratio
     if prt_details:
         print(EV_feasible/prob_feasible_state, ' = EV_feasible/prob_feasible_state,', EV_min, ' = EV_min,', min_energy_constraint, ' = min_energy_constraint.',prob_feasible_state, ' =prob_feasible_state,',n_feasible, ' = n_feasible,')
-    return prob_gnd_state, approx_ratio
+    return prob_gnd_state, approx_ratio,prob_feasible_state
 
 def min_energy( Adjacency, n_qubits, state_feasible=None):
     """
