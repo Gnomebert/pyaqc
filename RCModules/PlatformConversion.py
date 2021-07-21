@@ -7,6 +7,9 @@ def test1(x):
         print(x,' == 0')
 """
 Adjaceny_to_DWave_ising( qubo: 'Adjaceny table in dict form: qubo[(r,c)]', n_qubits):
+
+def is_number(s)
+def OpenListTxt(filename, decimal_places=3):
 def SaveListTxt(filename: '.txt file', ListToSave: 'A list of lists of results for each starting betagamma'):
 def SaveList_as_txt_file(ListToSave, filename):
 
@@ -47,10 +50,28 @@ def Adjaceny_to_DWave_ising( qubo: 'Adjaceny table in dict form: qubo[(r,c)]', n
             if c > r :
                 quadratic[(r,c)]        = qubo[(r,c)] 
     return linear, quadratic
+def is_number(s):
+    """" Return True if s is a number not a string
+        type:bool"""
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 def OpenListTxt(filename, decimal_places=3):
     """
     filename is presumed to be made up of a list containing numbers and lists
+    if a dict is found this will be recorded as an element of the list
+    Return example: 
+    [ 
+        { 1:dict},
+        [1,2,3,[10,20,30],[30,40,5],6 ],        # this is from a line in the file
+        { 1:dict},
+        [1,2,3,[10,20,30],[30,40,5],6 ]
+        ]
     """
+    
     f = open(filename, "r+")        #does not erase file just reads it.
     DataOut = []
     sub_list = []
@@ -58,27 +79,29 @@ def OpenListTxt(filename, decimal_places=3):
     string = f.readlines()              #read all the lines in the file
                                      # line by line  and create a list using the space delimiter
     for n, line in enumerate(string):
-        #print(line, 'line')#, end='')
-        line.rstrip()
-        list_of_new_line = []
-        listfnd = 0
-        for x in line.split(' '):  #A)strip end white space B) split the string by the delimiter C) convert to float list:
-            if x != '\n':
-                if  x.rfind('[')>=0 or listfnd  > 0 :   #start of a sub_list
-                    
-                    listfnd += 1            # ADD number of [
-                    y = x.strip('[')
-                    y = y.strip(']')
-                    y = y.strip(',')
-                    sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
-                    if x.rfind(']') >=0:                #end of a sub_list
-                        listfnd -= 1        # SUB number of ]
-                        list_of_new_line.append(sub_list)
-                        sub_list = []
+        if line.find('{')>=0 and line.find('}')>=0:     #test for a dict in the line
+            DataOut.append( line)
+        else:
+            line.rstrip()
+            list_of_new_line = []
+            listfnd = 0
+            for x in line.split(' '):  #A)strip end white space B) split the string by the delimiter C) convert to float list:
+                if x != '\n':
+                    if  x.rfind('[')>=0 or listfnd  > 0 :   #start of a sub_list
+                        
+                        if  x.rfind('[')>=0:listfnd += 1            # ADD number of [
+                        y = x.strip('[')
+                        y = y.strip(']')
+                        y = y.strip(',')
+                        sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                        if x.rfind(']') >=0:                #end of a sub_list
+                            listfnd -= 1        # SUB number of ]
+                            list_of_new_line.append(sub_list)
+                            sub_list = []
+                    else:
+                        if is_number(x):list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
                 else:
-                    list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
-            else:
-                DataOut.append( list_of_new_line)
+                    DataOut.append( list_of_new_line)
     f.close()
     return DataOut
 

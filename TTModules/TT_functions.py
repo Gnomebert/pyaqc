@@ -230,7 +230,9 @@ def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
     string = f.readlines()              #read all the lines in the file
     #print(string[0])                               # line by line  and create a list using the space delimiter
     dict_str = string[0]
-    convertedDict = ast.literal_eval(dict_str)
+    convertedDict = {} 
+    if dict_str.find('{')>=0 and dict_str.find('}')>=0:     #test for a dict in the line
+            convertedDict = ast.literal_eval(dict_str)
     string1 = string[1:]
     if prt_len: print(len(string1), 'string1')
     for n, line in enumerate(string1):
@@ -242,7 +244,7 @@ def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
             if x != '\n':
                 if  x.rfind('[')>=0 or listfnd  > 0 :   #start of a sub_list
                     
-                    listfnd += 1            # ADD number of [
+                    if  x.rfind('[')>=0:listfnd += 1            # ADD number of [
                     y = x.strip('[')
                     y = y.strip(']')
                     y = y.strip(',')
@@ -261,9 +263,17 @@ def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
 
 def OpenListTxt(filename, decimal_places=3):
     """
-    filename is presumed to be made up of a list containing numbers and lists 
-    This is RC's original OpenListTxt function and has not been amended
+    filename is presumed to be made up of a list containing numbers and lists
+    if a dict is found this will be recorded as an element of the list
+    Return example: 
+    [ 
+        { 1:dict},
+        [1,2,3,[10,20,30],[30,40,5],6 ],        # this is from a line in the file
+        { 1:dict},
+        [1,2,3,[10,20,30],[30,40,5],6 ]
+        ]
     """
+    
     f = open(filename, "r+")        #does not erase file just reads it.
     DataOut = []
     sub_list = []
@@ -271,29 +281,32 @@ def OpenListTxt(filename, decimal_places=3):
     string = f.readlines()              #read all the lines in the file
                                      # line by line  and create a list using the space delimiter
     for n, line in enumerate(string):
-        #print(line, 'line')#, end='')
-        line.rstrip()
-        list_of_new_line = []
-        listfnd = 0
-        for x in line.split(' '):  #A)strip end white space B) split the string by the delimiter C) convert to float list:
-            if x != '\n':
-                if  x.rfind('[')>=0 or listfnd  > 0 :   #start of a sub_list
-                    
-                    listfnd += 1            # ADD number of [
-                    y = x.strip('[')
-                    y = y.strip(']')
-                    y = y.strip(',')
-                    sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
-                    if x.rfind(']') >=0:                #end of a sub_list
-                        listfnd -= 1        # SUB number of ]
-                        list_of_new_line.append(sub_list)
-                        sub_list = []
+        if line.find('{')>=0 and line.find('}')>=0:     #test for a dict in the line
+            DataOut.append( line)
+        else:
+            line.rstrip()
+            list_of_new_line = []
+            listfnd = 0
+            for x in line.split(' '):  #A)strip end white space B) split the string by the delimiter C) convert to float list:
+                if x != '\n':
+                    if  x.rfind('[')>=0 or listfnd  > 0 :   #start of a sub_list
+                        
+                        if  x.rfind('[')>=0:listfnd += 1            # ADD number of [
+                        y = x.strip('[')
+                        y = y.strip(']')
+                        y = y.strip(',')
+                        sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                        if x.rfind(']') >=0:                #end of a sub_list
+                            listfnd -= 1        # SUB number of ]
+                            list_of_new_line.append(sub_list)
+                            sub_list = []
+                    else:
+                        if is_number(x):list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
                 else:
-                    list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
-            else:
-                DataOut.append( list_of_new_line)
+                    DataOut.append( list_of_new_line)
     f.close()
     return DataOut
+
 
 
 
