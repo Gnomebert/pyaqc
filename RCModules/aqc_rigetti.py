@@ -192,7 +192,6 @@ def min_energy( Adjacency, n_qubits, state_feasible=None):
         if not len(state_feasible)== n_qubits:
             raise AssertionError('In get_gnd_state_probs_and_approx_ratio() call to min_energy(), len(state_feasible)',len(state_feasible), 'does not equal', n_qubits, 'n_qubits')
         feasible_int = int(state_feasible,2)        #convert binary string in base 2 to integer base 10
-        print(feasible_int,state_feasible ,'hi')
 
         min_energy_constraint = min(min_energy_constraint,Energy_of_binary_state( feasible_int, SumPauli_termsMy_constr,n_qubits))
     return min_energy_constraint
