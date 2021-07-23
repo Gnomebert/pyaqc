@@ -90,7 +90,8 @@ def ansatz_prog_init(prog_init, pauli_cost_terms_list, n_qubits, n_destinations,
 
     return ansatz_prog
 
-def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=None, state_feasible=None, prt_details=False):
+def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=None, 
+state_feasible=None, prt_details=False):
     """
     return  A) the cumulative probability of the lowest energy state sampled, 
             B) 'approx_ratio' from the feasible states, (defined as states that minimize 'Adjacency_constraint') the average energy calculated without any constraint energy / ground state energy.
@@ -117,23 +118,28 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
     prob_feasible_state = 0
     EV_feasible = 0 
     approx_ratio = -1
-    EV_min = 1000000000000000000000000
+    seen_first_compliant_state = 0
+    
+    EV_min  = Expectation_of_state = Energy_of_binary_state( 0, SumPauli_termsMy,n_qubits)
+    
     # EV of state '00...00'
     #EV_min = Energy_of_binary_state( state_str, SumPauli_termsMy,n_qubits)
     solution_ansatz = ansatz_prog(opt_betagamma)        #   dict {state_i:prob_i}
     n_feasible=0
     
     if not Adjacency_constraint==None: 
-           
+        ' get  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR if state_feasible is supplied the adjacenys energy in that state  type:float'
         min_energy_constraint = min_energy( Adjacency_constraint, n_qubits, state_feasible=state_feasible.replace(' ',''))
         ListPauli_terms_constr,SumPauli_termsMy_constr  = Adjacency_qubo_to_Regetti( Adjacency_constraint, n_qubits)
+        
     probsAbsolute  = WavefunctionSimulator().wavefunction(solution_ansatz).get_outcome_probs()
     opt_probs_absolute = [x for x in probsAbsolute.values()]
     for n in range(2**n_qubits):
-        if opt_probs_absolute[n] > 0.00001 :    #|qn...q0>
-            
+        
+        if opt_probs_absolute[n] > 0.00001 or 1:    #|qn...q0>
+            Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)    
             # calculation of energy, using n as the state, NOT recalculating the state by building its quantum circuit eg Program(X(0),I(1))
-            Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)
+            #Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)
 
             if Expectation_of_state <= EV_min:   
                 
@@ -143,9 +149,14 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
                 prob_gnd_state += opt_probs_absolute[n]
                 EV_min = Expectation_of_state
             if not Adjacency_constraint==None:
-                # If the Adjacency_constraint has an energy that is the minimium possible, the Hard constraints have been met..
+                # If the Adjacency_constraint has an energy that is the minimium possible, the constraints have been met..
                 #...then the energy calculated without any constraint energy is averaged
                 if Energy_of_binary_state( n, SumPauli_termsMy_constr, n_qubits) == min_energy_constraint:
+                    if seen_first_compliant_state==0:
+                        Energy_max = EV_min - min_energy_constraint 
+                        #print(Energy_max , ' = Energy_max, first estimate')
+
+                    seen_first_compliant_state = 1
                     EV_feasible += opt_probs_absolute[n] * (Expectation_of_state - min_energy_constraint)
                     prob_feasible_state +=opt_probs_absolute[n]
                     n_feasible +=1
@@ -153,18 +164,22 @@ def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_term
                     if (EV_feasible/prob_feasible_state < 2 or (Expectation_of_state - min_energy_constraint) <2) and 0:
                         print(EV_feasible/prob_feasible_state, 'cum wt avg')
                         print(n,str(bin(n)[2:]) ,'is feasible',min_energy_constraint,(Expectation_of_state - min_energy_constraint))
+                    # find max energy when constraint energy is at a minimum
+                    Energy_max = max(Energy_max,Expectation_of_state-min_energy_constraint)
+                    
+
     if not prob_feasible_state==0:
-        
-        approx_ratio = EV_feasible/(prob_feasible_state * (EV_min-min_energy_constraint) )
-        if (EV_min-min_energy_constraint) > 0:
-            approx_ratio = 1/approx_ratio
+        if EV_min-min_energy_constraint-Energy_max ==0: approx_ratio = 0
+        else:approx_ratio = (EV_feasible/prob_feasible_state-Energy_max)/(EV_min-min_energy_constraint-Energy_max) 
+        #print(EV_feasible/prob_feasible_state-Energy_max,'=(EV_feasible/prob_feasible_state-Energy_max)',EV_min-min_energy_constraint-Energy_max,'= EV_min-min_energy_constraint-Energy_max')
     if prt_details:
         print(EV_feasible/prob_feasible_state, ' = EV_feasible/prob_feasible_state,', EV_min, ' = EV_min,', min_energy_constraint, ' = min_energy_constraint.',prob_feasible_state, ' =prob_feasible_state,',n_feasible, ' = n_feasible,')
+        print(Energy_max , ' = Energy_max, with constraint Energy=0')
     return prob_gnd_state, approx_ratio,prob_feasible_state
 
 def min_energy( Adjacency, n_qubits, state_feasible=None):
     """
-    Return  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR is state_feasible is supplied the adjaceny's energy in that state
+    Return  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR if state_feasible is supplied the adjaceny's energy in that state
     type:float
     """
 
@@ -177,8 +192,9 @@ def min_energy( Adjacency, n_qubits, state_feasible=None):
         if not len(state_feasible)== n_qubits:
             raise AssertionError('In get_gnd_state_probs_and_approx_ratio() call to min_energy(), len(state_feasible)',len(state_feasible), 'does not equal', n_qubits, 'n_qubits')
         feasible_int = int(state_feasible,2)        #convert binary string in base 2 to integer base 10
+        print(feasible_int,state_feasible ,'hi')
+
         min_energy_constraint = min(min_energy_constraint,Energy_of_binary_state( feasible_int, SumPauli_termsMy_constr,n_qubits))
-    #print(min_energy_constraint)
     return min_energy_constraint
 
 def Dicke_state_local( 

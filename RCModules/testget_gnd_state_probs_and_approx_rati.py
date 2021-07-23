@@ -88,6 +88,7 @@ def get_prog_init(n_qubits,remove_constraint,n_ambulance ):
     Return the Quantum circuit of the initial state (eg Hamamard for Xmixer)
     """
     prog_init = Program()
+
     if not remove_constraint:
         #A) 
         print('Hadamard initial state.   ', n_qubits, ' = n_qubits')
@@ -110,10 +111,11 @@ MyMixerHam, Ansatz_type = get_mixer(n_qubits,remove_constraint,n_ambulance )
 prog_init = get_prog_init(n_qubits,remove_constraint,n_ambulance )
 
 # code plan: find bg for a q5 1 A problem
-q5p1TradXmHqq = [6.898, -0.022] # nm -252.8 #11.1%
+q5p1TradXmHqq = [6.898, -0.022] # nm -252.8 #11.1% Energy_max =-20 , Energy_min = -40 when constraint are complied with and have zero energy contribution to the cost function
 opt_betagamma = q5p1TradXmHqq = [6.898, -0.022] # nm -252.8 #11.1%
 p = len(opt_betagamma)//2
 state_feasible = '11011'
 ansatz_prog = ansatz_prog_init(prog_init,   ListPauli_termsMy, n_qubits, n_destinations,   p,MyMixerHam)
-prob_gnd_state, approx_ratio,prob_feasible_state = get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=Adjacency_constraint, state_feasible=state_feasible, prt_details=1)
-print(prob_gnd_state, approx_ratio,prob_feasible_state)
+if 1:
+    prob_gnd_state, approx_ratio,prob_feasible_state = get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=Adjacency_constraint, state_feasible=state_feasible, prt_details=1)
+    print(prob_gnd_state, approx_ratio,prob_feasible_state)
