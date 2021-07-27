@@ -179,7 +179,7 @@ state_feasible=None, prt_details=False):
 
 def min_energy( Adjacency, n_qubits, state_feasible=None):
     """
-    Return  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR if state_feasible is supplied the adjaceny's energy in that state
+    Return  Minimum energy of the Adjacency by considering all 2^n_qubits states. OR if state_feasible is supplied the adjacency's energy in that state (less run time).
     type:float
     """
 
