@@ -30,8 +30,18 @@ def create_ring_mixer(n_qubits):
 def Adjacency_Ising_to_Regetti( Adjacency: 'Adjacency table in form: qubo[(r,c)]', n_qubits):
 def Adjacency_qubo_to_Regetti( Adjacency: 'Adjacency  table in form: qubo[(r,c)]', n_qubits):
 
+def get_prog_init( **Ansatz_type )
+
+
+
+def get_mixer( print_details=True,**Ansatz_type )
 def get_mixer(n_qubits,use_XY_mixer,n_ambulance )
 def get_prog_init(n_qubits,use_XY_mixer,n_ambulance )
+get_QAOA_circuit(n_qubits, n_destinations,n_ambulance,p,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None,Ansatz_type=None)
+def get_QAOA_circuit(p, prt_details=1, state_feasible=None,**Ansatz_type)
+def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_feasible=None,**Ansatz_type)
+
+get_gnd_state_probs_and_approx_ratio_simple_init(n_qubits, n_destinations,p,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None):
 
 def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,  prt_details=1,state_feasible=None )
 
@@ -467,7 +477,7 @@ def Adjacency_Ising_to_Regetti( Adjacency: 'Adjacency table in form: qubo[(r,c)]
                 ListPauli_termsMy.append(Adjacency[(r,c)] *sZ(r) *sZ(c) +0 )
                 SumPauli_termsMy += Adjacency[(r,c)]  *sZ(r) *sZ(c) + 0 
     return ListPauli_termsMy,SumPauli_termsMy
-def get_mixer(n_qubits,use_XY_mixer,n_ambulance,Ansatz_type, print_details=True ):
+def get_mixer(n_qubits,use_XY_mixer,n_ambulance,Ansatz_type,n_destinations, print_details=True ):
     """
     Return Rigetti observables that can be exponentiated, and a description 'Ansatz_type' (type:dict)
     type: Pauli Observables, for example sX(n) can be exponentiated e^{-beta sum_0^n(sX(n))} which causes a X axis rotation of beta for all n qubits.
@@ -504,7 +514,48 @@ def get_mixer(n_qubits,use_XY_mixer,n_ambulance,Ansatz_type, print_details=True 
             print(MyMixerHam[0])        
         
     return MyMixerHam#, Ansatz_type
-def get_prog_init(n_qubits,use_XY_mixer,n_ambulance ):
+def get_mixer( print_details=True,**Ansatz_type ):
+    """
+    Return Rigetti observables that can be exponentiated, and a description 'Ansatz_type' (type:dict)
+    type: Pauli Observables, for example sX(n) can be exponentiated e^{-beta sum_0^n(sX(n))} which causes a X axis rotation of beta for all n qubits.
+    if use_XY_mixer==1 then the mixer created is an XY ring mixer otherwise it is an X mixer 
+    if n_ambulance ==2 and use_XY_mixer==1, then 3 XY ring mixers are created otherwise it is an X mixer
+    if,
+        mixer_{j,k} = sX(j)sX(k) + sY(j)sY(k)
+    we can define a ring mixer length n as 
+        ring_mixer = mixer_{0,n} + sum_{j=0}^{n-1}(mixer_{j,j+1)
+    and create the quantum circuit for an XY ring mixer
+        e^{-gamma ring_mixer}
+    """
+    #n_qubits,use_XY_mixer,n_ambulance,Ansatz_type,n_destinations,
+    HW= Ansatz_type['HammingWeightOfConstraint']
+    n_q = Ansatz_type['n_qubits']
+    MyMixerHam = []
+    MyMixerHam.append(0)                # Perhaps required by QAOA()
+    if  Ansatz_type['use_XYMixer_constraints']:           
+        XYmixer = create_ring_mixer(n_q)
+        MyMixerHam[0] = XYmixer         #XY
+        Ansatz_type['Mixer'] ='XY Ring mixer'
+        if Ansatz_type['n_ambulance']==2:
+            MyMixerHam, prog_init_three_XYMixers = three_XYMixers_Dicke_states(n_q, Ansatz_type['n_destinations']) 
+            Ansatz_type['prog_init'] = 'Three Dicke states'
+            Ansatz_type['Mixer'] ='Three XY Ring mixers' 
+            labels= ['Destination XYmixer','Start0 XYmixer','Start1 XYmixer']
+            for n_mixer, mixer in enumerate(MyMixerHam):
+                if print_details: 
+                    print(labels[n_mixer])
+                    print(mixer)
+    else:
+        for n in range(n_q):       
+            MyMixerHam[0] += 1*sX(n) 
+        Ansatz_type['Mixer'] ='TRADITIONAL /  Farhi  mixer' 
+        if print_details: 
+            print(Ansatz_type['Mixer'])
+            print(MyMixerHam[0])        
+        
+    return MyMixerHam#, Ansatz_type
+
+def get_prog_init(n_qubits,use_XY_mixer,n_ambulance,HammingWeightOfConstraint,n_destinations, Ansatz_type=None ):
     """
     Return the Quantum circuit of the initial state (eg Hamamard for Xmixer)
     if use_XY_mixer==1 then the circuit created is a Dicke_state otherwise it is an Hamamard
@@ -515,24 +566,84 @@ def get_prog_init(n_qubits,use_XY_mixer,n_ambulance ):
     if not use_XY_mixer:
         #A) 
         print('Hadamard initial state.   ', n_qubits, ' = n_qubits')
+        state_init = ''
         for n in range(n_qubits):
             prog_init += H(n)
+            state_init += 'H'
+        if not Ansatz_type==None:Ansatz_type['prog_init'] = 'Pure start state |' + state_init +'>'
     else:
         if n_ambulance==2:
             #B)
             MyMixerHam, prog_init_three_XYMixers = three_XYMixers_Dicke_states(n_qubits, n_destinations)  
             prog_init = prog_init_three_XYMixers       
             print('The initial state is made of three separate Dicke_state s')
+            if not Ansatz_type==None:Ansatz_type['prog_init'] = 'three separate Dicke_state s'
         else:
             #C)
             print('Dicke_state initial state',HammingWeightOfConstraint, ' = HW')
             prog_init = Dicke_state(n_qubits, HammingWeightOfConstraint)
-
+            if not Ansatz_type==None:Ansatz_type['prog_init'] = 'Dicke_state of Hamming weight = ' + str(HammingWeightOfConstraint)
+    return prog_init
+def get_prog_init( **Ansatz_type ):
+    """
+    Return the Quantum circuit of the initial state (eg Hamamard for Xmixer)
+    if use_XY_mixer==1 then the circuit created is a Dicke_state otherwise it is an Hamamard
+    if n_ambulance ==2 then and use_XY_mixer==1, then 3  Dicke_states are created otherwise it is       a Hamamard.
+    """
+    HW= Ansatz_type['HammingWeightOfConstraint']
+    n_q = Ansatz_type['n_qubits']
+    prog_init = Program()
+    #n_qubits,use_XY_mixer,n_ambulance,HammingWeightOfConstraint,n_destinations,
+    if not Ansatz_type['use_XYMixer_constraints']:
+        #A) 
+        print('Hadamard initial state.   ',n_q , ' = n_qubits')
+        state_init = ''
+        for n in range(n_q):
+            prog_init += H(n)
+            state_init += 'H'
+        Ansatz_type['prog_init'] = 'Pure start state |' + state_init +'>'
+    else:
+        if Ansatz_type['n_ambulance'] ==2:
+            #B)
+            MyMixerHam, prog_init_three_XYMixers = three_XYMixers_Dicke_states(n_q, Ansatz_type['n_destinations'])  
+            prog_init = prog_init_three_XYMixers       
+            print('The initial state is made of three separate Dicke_state s')
+            Ansatz_type['prog_init'] = 'three separate Dicke_state s'
+        else:
+            #C)
+            print('Dicke_state initial state',HW, ' = HW')
+            prog_init = Dicke_state(Ansatz_type['n_qubits'], HW)
+            Ansatz_type['prog_init'] = 'Dicke_state of Hamming weight = ' + str(HW )
     return prog_init
 
 from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
 from pyaqc.RCModules.aqc_rigetti import min_energy
-def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,  prt_details=1,state_feasible=None ):
+def get_QAOA_circuit(p, prt_details=1, state_feasible=None,**Ansatz_type):
+    #n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
+    """
+    Return the quantum circuits that comprise the QAOA circuit and the observables that represent the edges and nodes of the problem.
+    """
+    # Get the Quantum circuit of the initial state (eg Hamamard for Xmixer)
+    prog_init = get_prog_init( **Ansatz_type  )
+    # Get Mixer quantum circuit
+    MyMixerHam = get_mixer( print_details=prt_details,**Ansatz_type)
+    # Get Pauli observables that represent an Ising problem, derived from an Adjacency table using a qubo definition of edge.
+    ListPauli_terms,SumPauli_terms  = Adjacency_qubo_to_Regetti( Ansatz_type['Adjacency'], Ansatz_type['n_qubits'])
+    #Create the QAOA program from prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms 
+    ansatz_prog = ansatz_prog_init(prog_init, ListPauli_terms, Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],   p, MyMixerHam) 
+    return prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog
+
+
+def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_feasible=None,**Ansatz_type):
+    # n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
+    prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog = get_QAOA_circuit(p, prt_details=0, state_feasible=state_feasible,**Ansatz_type)
+    
+    get_gnd_state_probs_and_approx_ratio = get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog,Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],p,Ansatz_type['Adjacency_constraint'],Ansatz_type['Adjacency_feasible'], prt_details=prt_details, state_feasible=state_feasible)
+    
+    return get_gnd_state_probs_and_approx_ratio
+
+def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None):
+#def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,n_destinations,  prt_details=1,state_feasible=None ):
     """
     The energy of , Adjacency_feasible (the X-mixer constraint adjacency), in a state_feasible, will be the characteristic energy that all feasible states share. 
     
@@ -547,28 +658,35 @@ def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_terms
         state_feasible=state_feasible.replace(' ','')
     "get  Minimum energy of the Adjacency by considering all 2^n_qubits states. Or more quickly using a suppied state_feasible"
     energy_of_feasible_state = min_energy( Adjacency_feasible, n_qubits, state_feasible=state_feasible)      ##use An adjacency that defines feasible space
-    min_energy_constraint_problem = min_energy( Adjacency_constraint, n_qubits, state_feasible=state_feasible)              ##use problem's actual mixer_constraints
+    #min_energy_constraint_problem = min_energy( Adjacency_constraint, n_qubits, state_feasible=state_feasible)              ##use problem's actual mixer_constraints
     
+    ListPauli_terms_constr,SumPauli_termsMy_constr  = Adjacency_qubo_to_Regetti( Adjacency_constraint, n_qubits)
     ### Calculate E_min_feas and E_max_fease  by a 2^n search ##############################################
-    ListPauli_terms_Xconstr,SumPauli_terms_Xconstr  = Adjacency_qubo_to_Regetti( Adjacency_feasible, n_qubits)
+    ListPauli_terms_feas,SumPauli_terms_feas  = Adjacency_qubo_to_Regetti( Adjacency_feasible, n_qubits)
     def energy_min_max_feasible():
         seen_first_compliant_state = 0
         #E_min_feas = Energy_of_binary_state( 0, SumPauli_termsMy,n_qubits)-min_energy_constraint_problem
         for n in range(2**n_qubits):
-            E_feas_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)-min_energy_constraint_problem
-            if Energy_of_binary_state( n, SumPauli_terms_Xconstr, n_qubits) == energy_of_feasible_state:
+            E_feas_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)#-min_energy_constraint_problem
+            
+            if Energy_of_binary_state( n, SumPauli_terms_feas, n_qubits) == energy_of_feasible_state:
                 if seen_first_compliant_state==0:
-                    E_max_feas = E_feas_of_state
-                    E_min_feas = E_feas_of_state
-                E_max_feas = max(E_max_feas,E_feas_of_state)
-                E_min_feas = min(E_min_feas,E_feas_of_state)
-                seen_first_compliant_state = 1
-        return E_min_feas, E_max_feas 
+                    Energy_frm_constraint = Energy_of_binary_state( n, SumPauli_termsMy_constr,n_qubits) # This is the same value every feasible state, as it is part of feas definition
+                    E_max_feas = E_feas_of_state - Energy_frm_constraint
+                    E_min_feas = E_feas_of_state -Energy_frm_constraint
+                    print(Energy_frm_constraint)
+                    seen_first_compliant_state = 1
+                    
+                E_max_feas = max(E_max_feas,E_feas_of_state - Energy_frm_constraint)
+                E_min_feas = min(E_min_feas,E_feas_of_state - Energy_frm_constraint)
+                
+        return E_min_feas, E_max_feas,Energy_frm_constraint 
 
-    E_min_feas, E_max_feas = energy_min_max_feasible()
+    E_min_feas, E_max_feas,Energy_frm_constraint = energy_min_max_feasible()
     ##############################################
     if prt_details==1:
-        print('E_min_feas = ', E_min_feas,'\nE_max_feas = ', E_max_feas,'\nenergy_of_feasible_state = ', energy_of_feasible_state,'\nmin_energy_constraint_problem = ',min_energy_constraint_problem  )
+        print('E_min_feas = ', E_min_feas,'\nE_max_feas = ', E_max_feas,'\nenergy_of_feasible_state = ', energy_of_feasible_state,'\nEnergy_frm_constraint in feas state = '
+        ,Energy_frm_constraint  )
     
     def get_gnd_state_probs_and_approx_ratio(opt_betagamma,  prt_details=1):  
         """prob_gnd_state, approx_ratio, prob_feasible_state
@@ -630,15 +748,16 @@ def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_terms
                 # calculation of energy, using n as the state, NOT recalculating the state by building its quantum circuit eg Program(X(0),I(1))
                 Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)    
 
-            if Expectation_of_state <= E_min_feas +  min_energy_constraint_problem:   
+            if Expectation_of_state <= E_min_feas +  Energy_frm_constraint:   #test if a ground state
                 
                 #psi_opt, state_string = decimal_state_to_binary_reversed(n,n_qubits)
                 prob_gnd_state += opt_probs_absolute[n]
             
             # If the Adjacency_constraint has an energy that is the minimium possible for a feasible state, the x mixer constraints have been met, ie space is 'feasible'..
             #...then the energy, without any problem_constraint energy, is averaged.
-            if Energy_of_binary_state( n, SumPauli_terms_Xconstr, n_qubits) == energy_of_feasible_state: #use X mixer_c
-                EV_feasible += opt_probs_absolute[n] * (Expectation_of_state - min_energy_constraint_problem )  #use problem's mixer_c
+            # Energy_frm_constraint
+            if Energy_of_binary_state( n, SumPauli_terms_feas, n_qubits) == energy_of_feasible_state: #use X mixer_c
+                EV_feasible += opt_probs_absolute[n] * (Expectation_of_state - Energy_frm_constraint )  #use problem's mixer_c
                 prob_feasible_state +=opt_probs_absolute[n]
                 n_feasible +=1
             elif show_debug:
