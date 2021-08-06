@@ -584,7 +584,7 @@ def get_prog_init(n_qubits,use_XY_mixer,n_ambulance,HammingWeightOfConstraint,n_
             prog_init = Dicke_state(n_qubits, HammingWeightOfConstraint)
             if not Ansatz_type==None:Ansatz_type['prog_init'] = 'Dicke_state of Hamming weight = ' + str(HammingWeightOfConstraint)
     return prog_init
-def get_prog_init( **Ansatz_type ):
+def get_prog_init(prt_details = 0, **Ansatz_type ):
     """
     Return the Quantum circuit of the initial state (eg Hamamard for Xmixer)
     if use_XY_mixer==1 then the circuit created is a Dicke_state otherwise it is an Hamamard
@@ -596,7 +596,7 @@ def get_prog_init( **Ansatz_type ):
     #n_qubits,use_XY_mixer,n_ambulance,HammingWeightOfConstraint,n_destinations,
     if not Ansatz_type['use_XYMixer_constraints']:
         #A) 
-        print('Hadamard initial state.   ',n_q , ' = n_qubits')
+        if prt_details: print('Hadamard initial state.   ',n_q , ' = n_qubits')
         state_init = ''
         for n in range(n_q):
             prog_init += H(n)
@@ -607,11 +607,11 @@ def get_prog_init( **Ansatz_type ):
             #B)
             MyMixerHam, prog_init_three_XYMixers = three_XYMixers_Dicke_states(n_q, Ansatz_type['n_destinations'])  
             prog_init = prog_init_three_XYMixers       
-            print('The initial state is made of three separate Dicke_state s')
+            if prt_details: print('The initial state is made of three separate Dicke_state s')
             Ansatz_type['prog_init'] = 'three separate Dicke_state s'
         else:
             #C)
-            print('Dicke_state initial state',HW, ' = HW')
+            if prt_details: print('Dicke_state initial state',HW, ' = HW')
             prog_init = Dicke_state(Ansatz_type['n_qubits'], HW)
             Ansatz_type['prog_init'] = 'Dicke_state of Hamming weight = ' + str(HW )
     return prog_init
@@ -642,7 +642,7 @@ def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_fea
     
     return get_gnd_state_probs_and_approx_ratio
 
-def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None):
+def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False):
 #def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,n_destinations,  prt_details=1,state_feasible=None ):
     """
     The energy of , Adjacency_feasible (the X-mixer constraint adjacency), in a state_feasible, will be the characteristic energy that all feasible states share. 
@@ -665,7 +665,6 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
     ListPauli_terms_feas,SumPauli_terms_feas  = Adjacency_qubo_to_Regetti( Adjacency_feasible, n_qubits)
     def energy_min_max_feasible():
         seen_first_compliant_state = 0
-        #E_min_feas = Energy_of_binary_state( 0, SumPauli_termsMy,n_qubits)-min_energy_constraint_problem
         for n in range(2**n_qubits):
             E_feas_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)#-min_energy_constraint_problem
             
@@ -674,7 +673,6 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
                     Energy_frm_constraint = Energy_of_binary_state( n, SumPauli_termsMy_constr,n_qubits) # This is the same value every feasible state, as it is part of feas definition
                     E_max_feas = E_feas_of_state - Energy_frm_constraint
                     E_min_feas = E_feas_of_state -Energy_frm_constraint
-                    print(Energy_frm_constraint)
                     seen_first_compliant_state = 1
                     
                 E_max_feas = max(E_max_feas,E_feas_of_state - Energy_frm_constraint)
@@ -741,7 +739,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
         
         probsAbsolute  = WavefunctionSimulator().wavefunction(solution_ansatz).get_outcome_probs()
         opt_probs_absolute = [x for x in probsAbsolute.values()]
-        show_debug=1
+        
         for n in range(2**n_qubits):
         
             if opt_probs_absolute[n] > 0.00001 :    #|qn...q0>

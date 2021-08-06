@@ -5,6 +5,14 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 def qubo_energy_value(ψ, qubo):
+    """
+    params
+        ψ is the binary state to be evaluated
+        type: list or string. Example [1,1,1,0,0,1] or'111001' |q0...qn> not Rigetti def of |qn...q0>
+        qubo is a dict of the edges and nodes, defined as qubo (not Ising), problem. Example {(0,1):2.5}
+    returns
+        The problem's energy when in binary state ψ
+    """
     E=0
     if isinstance(ψ, str) :
         ψ=ψ.replace(' ','')

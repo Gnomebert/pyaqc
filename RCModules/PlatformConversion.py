@@ -196,7 +196,7 @@ def print_QUBOdetails(quboUnordered: 'dict of edge and nodes', n_qubits, filenam
  
    
 def CreateAmbulanceAdjacency(gridWidth,n_qubits = 5, ConstraintMultiplier = 1, Adddistance = 1,remove_constraint: bool =True,
-HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency table'=True ):
+HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency table'=True, **kwargs ):
     """
     Returns a 2d dict: type {(0,0):0}. n_qubits * n_qubits,  of an adjacency table for the ambulance problem. 
      
@@ -219,7 +219,10 @@ HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency
     else:       #ISING
         linearWt = n_qubits-2* HammingWeightOfConstraint          # this is the constraint condition for a spin/Ising model (x= -1 or 1)
         quadWt = 1                                              
-
+    max_distance = 0
+    min_distance = 0
+    debug = 0
+    first_dis_defined = 0
     Adjacency   = {(0,0):0}
     linearWt = linearWt * ConstraintMultiplier
     for r in range(0,n_qubits):
@@ -229,9 +232,19 @@ HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency
                     Adjacency[(r,c)] = linearWt
             elif c > r :
                 if Adddistance :
+                        
                         r0,c0 = co_ord(r,Height,gridWidth)
                         r1,c1 = co_ord(c,Height,gridWidth)
-                        coeff =  - distance(r0,c0, r1,c1)  # distance assumes all qubits are evenly space in a grid structure
+                        d = distance(r0,c0, r1,c1)  # distance assumes all qubits are evenly space in a grid structure
+                        if  first_dis_defined==0:
+                            
+                            first_dis_defined = 1
+                            min_distance = d
+                            max_distance = d
+                        min_distance = min(min_distance,d)
+                        max_distance = max(max_distance,d)
+
+                        coeff =  - d # distance assumes all qubits are evenly space in a grid structure
                         if remove_constraint==0:
                             coeff +=  ConstraintMultiplier*quadWt
                 else:
@@ -240,6 +253,8 @@ HammingWeightOfConstraint=1, qubo_model:'qubo_model definition used in Adjacency
                     else:
                         coeff = 0          
                 Adjacency[(r,c)]             = coeff
+    
+    
     return Adjacency
 
    
@@ -357,7 +372,7 @@ For example; location grids of 2*2, or 3*2, or 3*3 . These use; 2*2*4 = 16 , or 
                  #   qubo[(q1,q2)] = 0 
     result={'qubo':qubo, 'quboHybrid':quboHybrid, 'n_qubits':n_qubits, 'ConstraintMultiplier':ConstraintMultiplier,'max_distance': max_distance, 'sum_distance':sum_distance}
     return result  
-def CreateTwoAmbulanceAdjacencyV1(gridWidth,n_destinations: 'Number of locations servied by ambulance fleet'= 5, Adddistance = 1
+def CreateTwoAmbulanceAdjacencyV1(gridWidth,n_destinations: 'Number of locations serviced by ambulance fleet'= 5, Adddistance = 1
 ,ConstraintMultiplier:'If ConstraintMultiplier= 0, it is calculated automatically'=0,  qubo_model:'qubo_model definition used in Adjacency table'=True):
     """
     Returns: type dict result={'qubo':qubo, 'quboHybrid':quboHybrid, 'n_qubits':n_qubits, 'ConstraintMultiplier':ConstraintMultiplier,'max_distance': max_distance, 'sum_distance':sum_distance}
