@@ -28,7 +28,23 @@ def Grid_Destinations(psi_opt, H ,W):
     """
     idx = 0
     Grid_Locations(psi_opt, H ,W, idx)
-def Prt_A0_A1_Destinations(psi_opt,Height,Width):
+"""def Grid_DestinationsA0(psi_opt, H ,W)
+def Grid_DestinationsA1(psi_opt, H ,W)"""
+def Grid_DestinationsA0(psi_opt, H ,W, prt_title=0):
+    """
+    Print 1 to indicate the position of AO destinations, or 0 for those not allocated to A0 destinations.
+    """
+    if prt_title:print('First ambulance destinations. (Print 1 to indicate the position of A0 destinations, or 0 for those not allocated to A0 destinations.)')
+    idx = 0
+    Grid_Locations(psi_opt, H ,W, idx)
+def Grid_DestinationsA1(psi_opt, H ,W, prt_title=0):
+    """
+    Print 1 to indicate the position of A1 destinations, or 0 for those not allocated to A1 destinations.
+    """
+    idx = 1
+    if prt_title:print('Second ambulance destinations. (Print 1 to indicate the position of A1 destinations, or 0 for those not allocated to A1 destinations.)')
+    Grid_Locations(psi_opt, H ,W, idx)
+def Prt_A0_A1_Destinations_old(psi_opt,Height,Width):
     """Print Ambulances destinations
     param H 'grid height (Type:int)'
 
@@ -52,7 +68,7 @@ def Prt_A0_A1_Destinations(psi_opt,Height,Width):
         print(psi_opt[Width * Height:2*Width * Height], '= psi_opt 2nd ambulance destinations \n')
     return ConstraintMet
 
-def Grid_StartPositionsAO(psi_opt, H ,W):
+def Grid_StartPositionsA0(psi_opt, H ,W, prt_locs=1):
     """
     param H 'grid height (Type:int)'
 
@@ -63,15 +79,15 @@ def Grid_StartPositionsAO(psi_opt, H ,W):
     Output prints starting positions of A0  in a grid measuring H by W
     """
     idx = 2
-    print('StartPositionsA0')
-    NLocs, Apos = Grid_Locations(psi_opt, H ,W, idx)
+    if prt_locs:print('StartPositionsA0')
+    NLocs, Apos = Grid_Locations(psi_opt, H ,W, idx, prt_locs=prt_locs)
     if  NLocs==1 :
         print('\t\t\t Start Position A0 Constraints met')
     else:
         print('\t\t\tERROR Start Position A0 Constraints not met')
     return Apos
 
-def Grid_StartPositionsA1(psi_opt, H ,W):
+def Grid_StartPositionsA1(psi_opt, H ,W, prt_locs=1):
     """
     param H 'grid height (Type:int)'
 
@@ -84,14 +100,14 @@ def Grid_StartPositionsA1(psi_opt, H ,W):
     Return qubit number representing the starting psoition of A0 (Type:int)
     """
     idx = 3
-    print('StartPositionsA1')
-    NLocs, Apos = Grid_Locations(psi_opt, H ,W, idx)
+    if prt_locs:print('StartPositionsA1')
+    NLocs, Apos = Grid_Locations(psi_opt, H ,W, idx, prt_locs=prt_locs)
     if  NLocs==1 :
         print(' \t\t\tStart Position A1 Constraints met')
     else:
         print(' \t\t\tERROR Start Position A1 Constraints not met')
     return Apos
-def Grid_Locations(psi_opt, H ,W,idx:'Feature, eg AO_Dest or A)_Start'):
+def Grid_Locations(psi_opt, H ,W,idx:'Feature, eg AO_Dest or A)_Start', prt_locs=1):
     """
     Print the rows of a H*W grid that refers to feature number idx, 
     eg idx=0 is the grid of A0_Destination
@@ -101,16 +117,21 @@ def Grid_Locations(psi_opt, H ,W,idx:'Feature, eg AO_Dest or A)_Start'):
     """
     i=0
     sumlocs=0
+    Apos =0
     if len(psi_opt) >= (idx+1)* W*H:  
         StartGrid =  int(idx * W*H )         
         for i in range(0,int(H)):
             s = int( W * i + idx * W*H )        #Start of row
             e = int( s + W  )                   #End of row
             #Print each row, i, of the grid feature idx
-            print (psi_opt[s:e])    
+            if prt_locs:
+                for c in psi_opt[s:e]:
+                    print ("{0:2},".format(c), end='')
+                print()
+            #print (psi_opt[s:e])    
             
             sumlocs += sum(psi_opt[s:e])
-        if sumlocs > 0:
+        if sumlocs > 0 and idx >1:      #Only search for start position in A0_start or A1_start 
             Apos = psi_opt[StartGrid:e].index(1)
         else:
             Apos = -1
@@ -139,7 +160,43 @@ def SolutionDistance(psi_opt,A0_sol,A1_sol,qubo,Nlocs):
             if qubo_pos[0] < 2*Nlocs :
                 d1 += elem * psi_opt[ qubo_pos[0] ]
     return d0 + d1
-    
+
+def Prt_A0_A1_Destinations(psi_opt,Height,Width,A0_sol=-1 , A1_sol=-1, show_start_pos=0):
+    """Print Ambulances destinations
+    param H 'grid height (Type:int)'
+
+    param W 'grid width (Type:int)'
+
+    param psi_opt 'Potential binary solution to objective function (Type:list int)'
+
+    Return (Type:bool) True if both the ambulances do not share a destination, and every destination is allocated, otherwise false
+    """
+    ConstraintMet = 1
+    display_psi = psi_opt
+    destination_list =[]
+    for q0, q1 in zip(psi_opt[:Width * Height],  psi_opt[Width * Height:2*Width * Height]):
+        if q0 + q1 != 1  :
+            ConstraintMet = 0
+            destination_list.append(-1)
+        elif q0==1: destination_list.append(0)
+        elif q1==1: destination_list.append(1)
+    #Add 10 or 20 to indicate the starting position of A0 and A1
+    if A0_sol != -1 and show_start_pos:
+            destination_list[A0_sol] = destination_list[A0_sol] + 10
+    if A1_sol != -1 and show_start_pos:
+        destination_list[A1_sol] = destination_list[A1_sol] + 20
+
+    if ConstraintMet:
+        print('Destination Constraints were Met.','\n Map of destinations of each ambulance, 0 for A0, 1 for A1. Where A0 starts add 10, A1 add 20')
+        Grid_Destinations(destination_list,Height,Width)
+        
+    else:
+        print('ERROR: Destination Constraints not Met. -1 has been allocated to destination not uniquely allocated to A0 or A1. Where A0 starts add 10, A1 add 20 ')
+        
+        Grid_Destinations(destination_list,Height,Width)
+        
+    return ConstraintMet
+ 
 def Print_Destinations(response, Height,Width, sampler_used='Sampler()', A0_sol=-1 , A1_sol=-1, show_start_pos=0):
     print(response.first[1], ' = Lowest energy found by',sampler_used,' in a grid',Width,'(w) by',Height,'(h)' )
     ConstraintMet = 1
