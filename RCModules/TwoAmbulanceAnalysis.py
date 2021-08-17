@@ -24,7 +24,7 @@ def qubo_energy_value(ψ, qubo):
     
 def Grid_Destinations(psi_opt, H ,W):
     """
-    Print 1 to indicate the position of AO destinations, or 0 for A1 destinations.
+    Print 1 to indicate the position of AO destinations, or 0 for those not allocated to A0 destinations.
     """
     idx = 0
     Grid_Locations(psi_opt, H ,W, idx)
@@ -97,6 +97,7 @@ def Grid_Locations(psi_opt, H ,W,idx:'Feature, eg AO_Dest or A)_Start'):
     eg idx=0 is the grid of A0_Destination
     eg idx=1 is the grid of A1_Destination
     eg idx=2 is the grid of A0_Start
+    eg idx=2 is the grid of A1_Start
     """
     i=0
     sumlocs=0
