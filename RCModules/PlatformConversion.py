@@ -97,8 +97,8 @@ def OpenListTxt(filename, decimal_places=-1):
                         y = y.strip(']')
                         y = y.strip(',')
                         if decimal_places==-1:
-                            sub_list.append( f)
-                        else: sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                            sub_list.append( y)
+                        else: sub_list.append( float(('%3.'+str(abs(decimal_places))+'f')% float(y)) )
                         if x.rfind(']') >=0:                #end of a sub_list
                             listfnd -= 1        # SUB number of ]
                             list_of_new_line.append(sub_list)

@@ -218,7 +218,7 @@ def is_number(s):
     except ValueError:
         return False
 
-def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
+def OpenListTxt_TT(filename, decimal_places=-1, prt_len=True):
     """
     Filename is presumed to be headed by a Dict followed by a list containing numbers and lists
     """
@@ -248,7 +248,12 @@ def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
                     y = x.strip('[')
                     y = y.strip(']')
                     y = y.strip(',')
-                    if is_number(y):sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                    
+                    if is_number(y):
+                        if decimal_places==-1:
+                            sub_list.append( y)
+                        else: sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                        #sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
                     if x.rfind(']') >=0:                #end of a sub_list
                         listfnd -= 1        # SUB number of ]
                         list_of_new_line.append(sub_list)
@@ -261,7 +266,7 @@ def OpenListTxt_TT(filename, decimal_places=3, prt_len=True):
     return convertedDict, DataOut
 
 
-def OpenListTxt(filename, decimal_places=3):
+def OpenListTxt(filename, decimal_places=-1):
     """
     filename is presumed to be made up of a list containing numbers and lists
     if a dict is found this will be recorded as an element of the list
@@ -295,7 +300,11 @@ def OpenListTxt(filename, decimal_places=3):
                         y = x.strip('[')
                         y = y.strip(']')
                         y = y.strip(',')
-                        sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
+                        if is_number(y):
+                            if decimal_places==-1:
+                                sub_list.append( y)
+                            else: sub_list.append( float(('%3.'+str(abs(decimal_places))+'f')% float(y)) )
+                        #sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
                         if x.rfind(']') >=0:                #end of a sub_list
                             listfnd -= 1        # SUB number of ]
                             list_of_new_line.append(sub_list)
