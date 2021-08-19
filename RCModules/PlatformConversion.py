@@ -61,7 +61,7 @@ def is_number(s):
 
 def OpenListTxt(filename, decimal_places=-1):
     """
-    filename is presumed to be made up of a list containing numbers and lists
+    param filename is presumed to be made up of a list containing numbers and lists
     if a dict is found this will be recorded as an element of the list
     Return example: 
     [ 
@@ -70,9 +70,6 @@ def OpenListTxt(filename, decimal_places=-1):
         { 1:dict},
         [1,2,3,[10,20,30],[30,40,5],6 ]
         ]
-    
-    param decimal_places , if left at -1 the acuracy of the data recalled is not truncated
-    
     """
     
     f = open(filename, "r+")        #does not erase file just reads it.
@@ -96,15 +93,19 @@ def OpenListTxt(filename, decimal_places=-1):
                         y = x.strip('[')
                         y = y.strip(']')
                         y = y.strip(',')
-                        if decimal_places==-1:
-                            sub_list.append( y)
-                        else: sub_list.append( float(('%3.'+str(abs(decimal_places))+'f')% float(y)) )
+                        if is_number(y):
+                            if decimal_places==-1:
+                                sub_list.append(float( y))
+                            else: sub_list.append( float(('%3.'+str(abs(decimal_places))+'f')% float(y)) )
+                        #sub_list.append( float(('%3.'+str(decimal_places)+'f')% float(y)) )
                         if x.rfind(']') >=0:                #end of a sub_list
                             listfnd -= 1        # SUB number of ]
                             list_of_new_line.append(sub_list)
                             sub_list = []
-                    else:
-                        if is_number(x):list_of_new_line.append( float(('%3.'+str(decimal_places)+'f')% float(x)) )
+                    else:                        
+                        if decimal_places==-1:
+                            list_of_new_line.append(float( x) )
+                        else: list_of_new_line.append( float(('%3.'+str(abs(decimal_places))+'f')% float(x)) )
                 else:
                     DataOut.append( list_of_new_line)
     f.close()
