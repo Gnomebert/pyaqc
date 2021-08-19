@@ -635,6 +635,12 @@ def get_QAOA_circuit(p, prt_details=1, state_feasible=None,**Ansatz_type):
 
 
 def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_feasible=None,**Ansatz_type):
+    """
+    Returns a function for calculating prob_gnd_state, approx_ratio, prob_feasible_state
+
+    param Ansatz_type (type:dict) supplies the details necessary to create the QAOA circuit with get_QAOA_circuit(), 
+        eg, Ansatz_type['Adjacency'],Ansatz_type['n_qubits'],Ansatz_type['use_XYMixer_constraints'],Ansatz_type['n_destinations']
+    """
     # n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
     prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog = get_QAOA_circuit(p, prt_details=0, state_feasible=state_feasible,**Ansatz_type)
     
@@ -683,7 +689,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
     E_min_feas, E_max_feas,Energy_frm_constraint = energy_min_max_feasible()
     ##############################################
     if prt_details==1:
-        print('E_min_feas = ', E_min_feas,'\nE_max_feas = ', E_max_feas,'\nenergy_of_feasible_state = ', energy_of_feasible_state,'\nEnergy_frm_constraint in feas state = '
+        print('E_min_feas = ', E_min_feas,'\nE_max_feas = ', E_max_feas,'\n energy_of_feasible_state = ', energy_of_feasible_state,'\n Energy_frm_constraint in feas state = '
         ,Energy_frm_constraint  )
     
     def get_gnd_state_probs_and_approx_ratio(opt_betagamma,  prt_details=1):  
