@@ -618,7 +618,7 @@ def get_prog_init(prt_details = 0, **Ansatz_type ):
 
 from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
 from pyaqc.RCModules.aqc_rigetti import min_energy
-def get_QAOA_circuit(p, prt_details=1, state_feasible=None,**Ansatz_type):
+def get_QAOA_circuit(p_init, prt_details=1, state_feasible=None,**Ansatz_type):
     #n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
     """
     Return the quantum circuits that comprise the QAOA circuit and the observables that represent the edges and nodes of the problem.
@@ -630,11 +630,11 @@ def get_QAOA_circuit(p, prt_details=1, state_feasible=None,**Ansatz_type):
     # Get Pauli observables that represent an Ising problem, derived from an Adjacency table using a qubo definition of edge.
     ListPauli_terms,SumPauli_terms  = Adjacency_qubo_to_Regetti( Ansatz_type['Adjacency'], Ansatz_type['n_qubits'])
     #Create the QAOA program from prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms 
-    ansatz_prog = ansatz_prog_init(prog_init, ListPauli_terms, Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],   p, MyMixerHam) 
+    ansatz_prog = ansatz_prog_init(prog_init, ListPauli_terms, Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],   p_init, MyMixerHam) 
     return prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog
 
 
-def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_feasible=None,**Ansatz_type):
+def get_gnd_state_probs_and_approx_ratio_simple_init(p_init, prt_details=1, state_feasible=None,**Ansatz_type):
     """
     Returns a function for calculating prob_gnd_state, approx_ratio, prob_feasible_state
 
@@ -642,13 +642,13 @@ def get_gnd_state_probs_and_approx_ratio_simple_init(p, prt_details=1, state_fea
         eg, Ansatz_type['Adjacency'],Ansatz_type['n_qubits'],Ansatz_type['use_XYMixer_constraints'],Ansatz_type['n_destinations']
     """
     # n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
-    prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog = get_QAOA_circuit(p, prt_details=0, state_feasible=state_feasible,**Ansatz_type)
+    prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog = get_QAOA_circuit(p_init, prt_details=0, state_feasible=state_feasible,**Ansatz_type)
     
-    get_gnd_state_probs_and_approx_ratio = get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog,Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],p,Ansatz_type['Adjacency_constraint'],Ansatz_type['Adjacency_feasible'], prt_details=prt_details, state_feasible=state_feasible)
+    get_gnd_state_probs_and_approx_ratio = get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog,Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],p_init,Ansatz_type['Adjacency_constraint'],Ansatz_type['Adjacency_feasible'], prt_details=prt_details, state_feasible=state_feasible)
     
     return get_gnd_state_probs_and_approx_ratio
 
-def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False):
+def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p_init,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False):
 #def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,n_destinations,  prt_details=1,state_feasible=None ):
     """
     The energy of , Adjacency_feasible (the X-mixer constraint adjacency), in a state_feasible, will be the characteristic energy that all feasible states share. 
@@ -733,7 +733,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
         EV_all_suggestions = 0
         Expectation_of_state = 0
         
-        if p == len(opt_betagamma)//2:
+        if p_init == len(opt_betagamma)//2:
             # calculate solution_ansatz with latest opt_betagamma, using the same p as when get_approx_ratio_init first called
             solution_ansatz = ansatz_prog(opt_betagamma)
         else:
