@@ -558,8 +558,8 @@ def get_mixer( print_details=True,**Ansatz_type ):
 def get_prog_init(n_qubits,use_XY_mixer,n_ambulance,HammingWeightOfConstraint,n_destinations, Ansatz_type=None ):
     """
     Return the Quantum circuit of the initial state (eg Hamamard for Xmixer)
-    if use_XY_mixer==1 then the circuit created is a Dicke_state otherwise it is an Hamamard
-    if n_ambulance ==2 then and use_XY_mixer==1, then 3  Dicke_states are created otherwise it is       a Hamamard.
+    if use_XY_mixer==1 then the circuit created is a single Dicke_state otherwise it is an Hamamard
+    if n_ambulance ==2  and use_XY_mixer==1, then 3  Dicke_states are created otherwise it is       a Hadamard.
     """
     prog_init = Program()
 
@@ -641,6 +641,7 @@ def get_gnd_state_probs_and_approx_ratio_simple_init(p_init, prt_details=1, stat
     param Ansatz_type (type:dict) supplies the details necessary to create the QAOA circuit with get_QAOA_circuit(), 
         eg, Ansatz_type['Adjacency'],Ansatz_type['n_qubits'],Ansatz_type['use_XYMixer_constraints'],Ansatz_type['n_destinations']
     """
+    #UseBetaGamma == { 'Betas':3, 'Gammas':3}
     # n_qubits, n_destinations,n_ambulance,use_XYMixer_constraints,HammingWeightOfConstraint,Adjacency,Adjacency_constraint,Adjacency_feasible,
     prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog = get_QAOA_circuit(p_init, prt_details=0, state_feasible=state_feasible,**Ansatz_type)
     
@@ -648,7 +649,7 @@ def get_gnd_state_probs_and_approx_ratio_simple_init(p_init, prt_details=1, stat
     
     return get_gnd_state_probs_and_approx_ratio
 
-def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p_init,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False):
+def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p_init,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False, Betas=1,Gammas=1):
 #def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,n_destinations,  prt_details=1,state_feasible=None ):
     """
     The energy of , Adjacency_feasible (the X-mixer constraint adjacency), in a state_feasible, will be the characteristic energy that all feasible states share. 
@@ -732,14 +733,15 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
         approx_ratio = -1
         EV_all_suggestions = 0
         Expectation_of_state = 0
-        
-        if p_init == len(opt_betagamma)//2:
+        # UseBetaGamma == { 'Betas':3, 'Gammas':3}
+        print(Betas, Gammas, 'from init')
+        if p_init == len(opt_betagamma)//(Betas+ Gammas):
             # calculate solution_ansatz with latest opt_betagamma, using the same p as when get_approx_ratio_init first called
             solution_ansatz = ansatz_prog(opt_betagamma)
         else:
             # calculate solution_ansatz with latest opt_betagamma and its implied p
             p_new = len(opt_betagamma)//2
-            ansatz_prog_flexible_p = ansatz_prog_init(prog_init, ListPauli_termsMy, n_qubits, n_destinations,   p_new,MyMixerHam)
+            ansatz_prog_flexible_p = ansatz_prog_init(prog_init, ListPauli_termsMy, n_qubits, n_destinations,   p_new, MyMixerHam)
             solution_ansatz = ansatz_prog_flexible_p(opt_betagamma)
             
         
