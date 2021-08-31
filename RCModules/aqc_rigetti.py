@@ -734,7 +734,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
         EV_all_suggestions = 0
         Expectation_of_state = 0
         # UseBetaGamma == { 'Betas':3, 'Gammas':3}
-        print(Betas, Gammas, 'from init')
+        #print(Betas, Gammas, 'from init')
         if p_init == len(opt_betagamma)//(Betas+ Gammas):
             # calculate solution_ansatz with latest opt_betagamma, using the same p as when get_approx_ratio_init first called
             solution_ansatz = ansatz_prog(opt_betagamma)
