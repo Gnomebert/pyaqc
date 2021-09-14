@@ -104,7 +104,10 @@ def OpenListTxt(filename, decimal_places=-1):
                             sub_list = []
                     else:                        
                         if decimal_places==-1:
-                            list_of_new_line.append(float( x) )
+                            if is_number(x):
+                                list_of_new_line.append(float( x) )
+                            else:
+                                list_of_new_line.append( x )
                         else: list_of_new_line.append( float(('%3.'+str(abs(decimal_places))+'f')% float(x)) )
                 else:
                     DataOut.append( list_of_new_line)
