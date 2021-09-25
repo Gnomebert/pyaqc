@@ -60,7 +60,7 @@ def draw(prog, first_gate_to_draw=0,max_gates_to_draw=30):
     #Iterate over prog
     for n,gate_kwargs_latest in enumerate(g):
         if n >= first_gate_to_draw and n< first_gate_to_draw+max_gates_to_draw:
-            if gate_kwargs_latest['gate_type']=='CNOT':
+            if gate_kwargs_latest['gate_type'][0]=='C':
                 #### find depth to position this CNOT
                 deepest_spanned_CNOT_depth = position_CNOT(circuit_matrix,gate_kwargs_latest)
                 add_depth_CNOT_cntrl_latest(deepest_spanned_CNOT_depth,circuit_matrix,gate_kwargs_latest)
@@ -123,6 +123,7 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
                         'rx': '#b342f5',
                         'RY': '#b342f5',
                         'RZ': '#b342f5',
+                        'CZ': '#b342f5',
                         'CNOT':'lightblue',
                         'reset': '#D188B4',
                         'target': '#70B7EB',
@@ -136,7 +137,8 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
                                         'RY':r'$R_y$'+ '\n'+f'{gate_param:3.1f}',
                                         'RZ':r'$R_z$'+ '\n'+f'{gate_param:3.1f}',
                                         'PHASE':'Pha'+'\n'+f'{gate_param:3.1f}',
-                                        'CNOT':'+'}                    
+                                        'CNOT':'+',
+                                        'CZ':r'CZ'+'\n'+'  '}                    
         
     if list(gate_string.keys()).count(gate_type)==0:
         gate_string_used = '  '+gate_type +'  \n'
@@ -146,9 +148,9 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
     gate_pos = (gate_spacing*(new_depth), 1-(qubit_idx)*wire_gap)  
      
     
-    if gate_type == 'CNOT':
+    if gate_type[0] == 'C':
 
-        ###### arrows cntl to 1) CNOT 2)prior gate 
+        ###### arrows cntl to 1) CNOT 2) prior gate 
         cntrl_pos =   (gate_spacing*(new_depth), 1-(cntrl_idx)*wire_gap)
         
         prior_gate_depth = gate_depth_by_qubit_idx[cntrl_idx]
@@ -157,15 +159,26 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
         #if cntrl_idx==1: print(gate_depth_by_qubit_idx[1],'gate_depth_by_qubit_idx[1]. pos = ', new_depth, arrow_to_prior_gate, ' =arrow_to_prior_gate')
         #print(arrow_to_prior_gate , cntrl_idx)
         #arrow_to_prior_gate = (0,cntrl_pos[1])
-        plt.plot(cntrl_pos[0],cntrl_pos[1],'o',color='lightblue')                   #plot CNOT cntrl 
-        #1) cntrl to CNOT
-        my_cntrl = ax.annotate(gate_string_used, xy=cntrl_pos, xycoords="data",     #arrow CNOT target to cntrl 
-                    xytext=gate_pos, textcoords="data",                             #CNOT target
-                    arrowprops=dict(arrowstyle="-",color='lightblue'),
-                    va="center", ha="center",
-                    bbox=dict(boxstyle='circle',edgecolor='w', fc=gate_color_used)#,color='w')
-                    ) 
-        my_cntrl.set_color('w') #color of text in box
+        if gate_type == 'CNOT':
+            plt.plot(cntrl_pos[0],cntrl_pos[1],'o',color='lightblue')                   #plot CNOT cntrl 
+            #1) cntrl to CNOT
+            my_cntrl = ax.annotate(gate_string_used, xy=cntrl_pos, xycoords="data",     #arrow CNOT target to cntrl 
+                        xytext=gate_pos, textcoords="data",                             #CNOT target
+                        arrowprops=dict(arrowstyle="-",color='lightblue'),
+                        va="center", ha="center",
+                        bbox=dict(boxstyle='circle',edgecolor='w', fc=gate_color_used)#,color='w')
+                        ) 
+            my_cntrl.set_color('w') #color of text in box
+        else:
+            plt.plot(cntrl_pos[0],cntrl_pos[1],'o',color='lightblue')                   #plot CZ cntrl 
+            #1) cntrl to CNOT
+            my_cntrl = ax.annotate(gate_string_used, xy=cntrl_pos, xycoords="data",     #arrow CZ target to cntrl 
+                        xytext=gate_pos, textcoords="data",                             #CZ target
+                        arrowprops=dict(arrowstyle="-",color='lightblue'),
+                        va="center", ha="center",
+                        bbox=dict(boxstyle='square',edgecolor='w', fc=gate_color_used)#,color='w')
+                        ) 
+            my_cntrl.set_color('b') #color of text in box
         #2) cntrl to prior gate
        
         arrow_cntrl_prior_gate= ax.annotate('', xy=arrow_to_prior_gate, xycoords="data", color='y',    #arrow cntrl to prior gate 
@@ -239,7 +252,7 @@ def instruction_generator(prog):
             cntrl = 0
             if len(instr.params)>0:
                 param = round(instr.params[0],1)            
-            # cntrl  eg for  a CNOT gate
+            # cntrl  eg for  a CNOT or CZ gate
             for n, q in enumerate(instr.qubits):
                 if n==0 and len(instr.qubits)>1:
                     #print(q,'=cntl',end=',')
@@ -256,7 +269,7 @@ def is_spanned(gate_kwargs_compare,gate_CNOT):
     b) a simple gate to be compared
     """
     if type(gate_kwargs_compare) != dict: return False
-    if gate_kwargs_compare['gate_type'] == 'CNOT':
+    if gate_kwargs_compare['gate_type'][0] == 'C':
         min_compare = min(idx_frm_label[gate_kwargs_compare['qubit_label'] ], idx_frm_label[gate_kwargs_compare['gate_cntrl']] )
         max_compare = max(idx_frm_label[gate_kwargs_compare['qubit_label'] ], idx_frm_label[gate_kwargs_compare['gate_cntrl']] )
     else:
@@ -273,7 +286,7 @@ def is_spanned(gate_kwargs_compare,gate_CNOT):
 
 def position_CNOT(circuit_matrix,gate_kwargs_latest):
     """
-    Return the instructionor depth? of the CNOT already psotioned in the circuit_matrix that is both 
+    Return the instruction or depth? of the CNOT already psotioned in the circuit_matrix that is both 
         a) SPANNED by the latest CNOT, and 
         b) is the DEEPEST example of this.
     """
@@ -287,7 +300,7 @@ def position_CNOT(circuit_matrix,gate_kwargs_latest):
             #print(depth_max, wire, ' depth_max, n')
             # select CNOT on current wire, deepest first. Test whether it overlaps with the CNOT gate to be position, the latest
             if type( gate_kwargs_in_matrix) == dict:
-                if gate_kwargs_in_matrix['gate_type']=='CNOT':
+                if gate_kwargs_in_matrix['gate_type'][0]=='C':
                     if is_spanned(gate_kwargs_in_matrix,gate_kwargs_latest) :
                         deepest_spanned_CNOT_depth = max(deepest_spanned_CNOT_depth,depth)
                         #print(deepest_spanned_CNOT_depth)
@@ -345,7 +358,7 @@ def is_proposed_scanned_by_CNOT(gate_kwargs_latest):
         if len(circuit_matrix[q]) > depth_to_search:                
             if type(circuit_matrix[q][depth_to_search]) == dict:
                 existing_gate = circuit_matrix[q][depth_to_search]
-                if  existing_gate['gate_type'] =='CNOT':                #is there a CNOT gate at this depth? 
+                if  existing_gate['gate_type'][0] =='C':                #is there a 'C' gate, ie a control gate eg CZ or CNOT, at this depth? 
                     #print(existing_gate, ' = existing_gate')
                     is_spanned(gate_kwargs_latest,existing_gate)        #does the CNOT span gate_kwargs_latest
                     return True
