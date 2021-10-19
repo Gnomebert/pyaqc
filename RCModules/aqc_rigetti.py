@@ -7,7 +7,6 @@ from pyquil.api import WavefunctionSimulator
 from pyquil.paulis import ID, sZ, sX, sY , exponential_map, exponentiate_commuting_pauli_sum
 from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
 
-
 """
 # Function alternative to Rigetti's QAOA()
 def ansatz_init_XYMixer( BetaGamma, ListPauli_termsMy, n_qubits, n_destinations,p, XY_or_Xmixer_list):
@@ -100,7 +99,7 @@ def ansatz_prog_init(prog_init, pauli_cost_terms_list, n_qubits, n_destinations,
     """
     Returns the name of a function ansatz_prog. When called with an angle, for example; ansatz_prog( initial_angle ), 
     type: Rigetti Program
-    It  represents the Ansatz ( cost Phase, and mixer), excluding the initial state.
+    It  represents the QAOA Ansatz ( cost Phase, and mixer), excluding the initial state.
     param MyMixerHam is a list of Pauli operators, which can be X or XY operators
     """
     def ansatz_prog( initial_angle ):
@@ -108,10 +107,28 @@ def ansatz_prog_init(prog_init, pauli_cost_terms_list, n_qubits, n_destinations,
 
     return ansatz_prog
 
+def get_gnd_state_prob(opt_Angle,ansatz_prog,SumPauli_termsMy,n_qubits, E_gnd_state,prt_details=False):
+    prob_gnd_state = 0
+    # EV of state '00...00'
+    
+    solution_ansatz = ansatz_prog(opt_Angle)        #   dict {state_i:prob_i}
+    
+    probsAbsolute  = WavefunctionSimulator().wavefunction(solution_ansatz).get_outcome_probs()
+    opt_probs_absolute = [x for x in probsAbsolute.values()]
+    
+    for n in range(2**n_qubits):        
+        if opt_probs_absolute[n] > 0.00001 or 1:    #|qn...q0>
+            Expectation_of_state = Energy_of_binary_state( n, SumPauli_termsMy,n_qubits)    
+            if Expectation_of_state <= E_gnd_state:   
+                prob_gnd_state += opt_probs_absolute[n]
+                EV_min = Expectation_of_state
+    return prob_gnd_state
+
 def get_gnd_state_probs_and_approx_ratio(opt_betagamma,ansatz_prog,SumPauli_termsMy,n_qubits,Adjacency_constraint=None, 
 state_feasible=None, prt_details=False):
     """
-    BEING DEPRECATED
+    BEING DEPRECATED 
+        instead use get_gnd_state_prob(theta,ansatz_prog,SumPauli_termsMy,Ansatz_type['n_qubits'], E_gnd_state,prt_details=False)
     return  A) the cumulative probability of the lowest energy state sampled, 
             B) 'approx_ratio' from the feasible states, (defined as states that minimize 'Adjacency_constraint') the average energy calculated without any constraint energy / ground state energy.
                     Or -1 if 'Adjacency_constraint' is not supplied
@@ -648,10 +665,23 @@ def get_gnd_state_probs_and_approx_ratio_simple_init(p_init, prt_details=1, stat
     get_gnd_state_probs_and_approx_ratio = get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_terms,SumPauli_terms,ansatz_prog,Ansatz_type['n_qubits'], Ansatz_type['n_destinations'],p_init,Ansatz_type['Adjacency_constraint'],Ansatz_type['Adjacency_feasible'], prt_details=prt_details, state_feasible=state_feasible)
     
     return get_gnd_state_probs_and_approx_ratio
-
-def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p_init,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False, Betas=1,Gammas=1):
-#def get_approx_ratio_init(ansatz_prog,prog_init,ListPauli_termsMy,SumPauli_termsMy,n_qubits,p,Adjacency_constraint,Adjacency_feasible,n_destinations,  prt_details=1,state_feasible=None ):
+def get_gnd_state_probs_and_approx_ratio_VQE_init(prog_VQE_ansatz, prt_details=1, state_feasible=None,**Ansatz_type):
+    prog_init = None
+    p_init = None
+    MyMixerHam=None
+    use_VQE=1
+    
+    ListPauli_termsMy,SumPauli_termsMy = Adjacency_qubo_to_Regetti( Ansatz_type['Adjacency'], Ansatz_type['n_qubits'])
+    return get_approx_ratio_init(\
+        prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,prog_VQE_ansatz,Ansatz_type['n_qubits'],\
+        Ansatz_type['n_destinations'],p_init,Ansatz_type['Adjacency_constraint'],Ansatz_type['Adjacency_feasible'],\
+        prt_details=prt_details, state_feasible=state_feasible, show_debug=False, Betas=1,Gammas=1, use_VQE=use_VQE)
+    
+    
+def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsMy,ansatz_prog,n_qubits, n_destinations,p_init,Adjacency_constraint,Adjacency_feasible, prt_details=1, state_feasible=None, show_debug=False, Betas=1,Gammas=1, use_VQE=0):
     """
+    Returns get_gnd_state_probs_and_approx_ratio() 
+
     The energy of , Adjacency_feasible (the X-mixer constraint adjacency), in a state_feasible, will be the characteristic energy that all feasible states share. 
     
     The energy of Adjacency_constraint in its ground state, is the energy cost of complying with all constraints in the problem
@@ -722,7 +752,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
             
             
         if p == len(opt_betagamma)//2=False, the ansatz_prog is re initiated each call of get_gnd_state_probs_and_approx_ratio, to reflect the p implied by opt_betagamma (eg when creating the approx ratio for many different p s of the same problem)
-        if p == len(opt_betagamma)//2=True , execution time is saved by using the ansatz_prog that was supplied by get_approx_ratio_init (eg when looking for betagamma minimum)
+        if p == len(opt_betagamma)//2=True or use_VQE==1 , execution time is saved by using the ansatz_prog that was supplied by get_approx_ratio_init (eg when looking for betagamma minimum)
         In the feasible space, what is the average energy found after substituting the actual constraint energy with 0? 
         """
         prob_gnd_state = 0
@@ -735,9 +765,10 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
         Expectation_of_state = 0
         # UseBetaGamma == { 'Betas':3, 'Gammas':3}
         #print(Betas, Gammas, 'from init')
-        if p_init == len(opt_betagamma)//(Betas+ Gammas):
+        if p_init == len(opt_betagamma)//(Betas+ Gammas) or use_VQE:
             # calculate solution_ansatz with latest opt_betagamma, using the same p as when get_approx_ratio_init first called
-            solution_ansatz = ansatz_prog(opt_betagamma)
+            # or if using a VQE ansatz keep the ansatz program first suggested
+            solution_ansatz = ansatz_prog(opt_betagamma)        #solution_ansatz is superposition of many states.
         else:
             # calculate solution_ansatz with latest opt_betagamma and its implied p
             p_new = len(opt_betagamma)//2

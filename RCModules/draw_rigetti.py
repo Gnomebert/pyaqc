@@ -51,7 +51,7 @@ def draw(prog, first_gate_to_draw=0,max_gates_to_draw=30):
 
     for idx,q in enumerate(prog.get_qubits()):
         idx_frm_label.update({q:idx})      #get_index
-        gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q} 
+        gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q,'modifiers':''} 
         gate_update(**gate_kwargs)
         circuit_matrix.append([gate_kwargs])
     #gate_update(['RX',.3,3],wire_gap=wire_gap_my)
@@ -60,7 +60,7 @@ def draw(prog, first_gate_to_draw=0,max_gates_to_draw=30):
     #Iterate over prog
     for n,gate_kwargs_latest in enumerate(g):
         if n >= first_gate_to_draw and n< first_gate_to_draw+max_gates_to_draw:
-            if gate_kwargs_latest['gate_type'][0]=='C':
+            if gate_kwargs_latest['gate_type'][0]=='C' or gate_kwargs_latest['modifiers']=='C':
                 #### find depth to position this CNOT
                 deepest_spanned_CNOT_depth = position_CNOT(circuit_matrix,gate_kwargs_latest)
                 add_depth_CNOT_cntrl_latest(deepest_spanned_CNOT_depth,circuit_matrix,gate_kwargs_latest)
@@ -93,10 +93,10 @@ def draw(prog, first_gate_to_draw=0,max_gates_to_draw=30):
     #ax.axis(False)                    # hide axies
     plt.show()
 
-def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label=0):
+def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label=0,modifiers=''):
     """
     Create the axis command to draw annotations to represent a series of gate.
-    gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q}
+    gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q,modifiers=''}
   
     """
     qubit_idx = idx_frm_label[qubit_label]
@@ -138,7 +138,8 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
                                         'RZ':r'$R_z$'+ '\n'+f'{gate_param:3.1f}',
                                         'PHASE':'Pha'+'\n'+f'{gate_param:3.1f}',
                                         'CNOT':'+',
-                                        'CZ':r'CZ'+'\n'+'  '}                    
+                                        'CZ':r'CZ'+'\n'+'  ',
+                                         }                   
         
     if list(gate_string.keys()).count(gate_type)==0:
         gate_string_used = '  '+gate_type +'  \n'
@@ -148,8 +149,8 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
     gate_pos = (gate_spacing*(new_depth), 1-(qubit_idx)*wire_gap)  
      
     
-    if gate_type[0] == 'C':
-
+    if gate_type[0] == 'C' or modifiers=='C':
+          
         ###### arrows cntl to 1) CNOT 2) prior gate 
         cntrl_pos =   (gate_spacing*(new_depth), 1-(cntrl_idx)*wire_gap)
         
@@ -229,7 +230,7 @@ def test_gate_update(prog):
     wire_gap_my = 0.07
     for idx,q in enumerate(prog.get_qubits()):
         idx_frm_label.update({q:idx})
-        gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q}
+        gate_kwargs ={'gate_type':'q','gate_param':0,'gate_cntrl':0,'qubit_label':q,'modifiers':''}
         gate_update(**gate_kwargs,wire_gap=wire_gap_my)
         
     gate_update(gate_type='H',qubit_label=3,wire_gap=wire_gap_my)
@@ -244,12 +245,14 @@ def test_gate_update(prog):
 
 def instruction_generator(prog):
     """
-    Yield the sequential gate instructions that make up the program. Used for subsequent drawing of each gate.
+    Yield, as kwargs for update(**kwargs), the sequential gate instructions that make up the program. Used for subsequent drawing of each gate.
     """
     for instr in prog:  
             #parameter, eg angle
             param = 0
             cntrl = 0
+            mod=''
+            if len(instr.modifiers) >0: mod='C'# different if it is double controlled
             if len(instr.params)>0:
                 param = round(instr.params[0],1)            
             # cntrl  eg for  a CNOT or CZ gate
@@ -260,7 +263,7 @@ def instruction_generator(prog):
             # qubit label number
             index = int(str(q))   #derive the number of a)what is controlled by the qubit,b)the qubit, and c) the gate description
             #print(index, ' index')  #debug
-            yield{'gate_type':instr.name,'gate_param':param,'gate_cntrl':cntrl,'qubit_label':index}
+            yield{'gate_type':instr.name,'gate_param':param,'gate_cntrl':cntrl,'qubit_label':index,'modifiers':mod} #instr.modifiers[0]='CONTROLLED'
             #yield [instr.name,param_or_cntrl,int(str(q))]
 def is_spanned(gate_kwargs_compare,gate_CNOT):
     """
