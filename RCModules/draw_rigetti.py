@@ -171,7 +171,7 @@ def gate_update(gate_type= 'q',new_depth=0,gate_param=0,gate_cntrl=0,qubit_label
                         ) 
             my_cntrl.set_color('w') #color of text in box
         else:
-            plt.plot(cntrl_pos[0],cntrl_pos[1],'o',color='lightblue')                   #plot CZ cntrl 
+            plt.plot(cntrl_pos[0],cntrl_pos[1],'o',color='lightblue')                   #plot CZ cntrl or CRZ cntrl
             #1) cntrl to CNOT
             my_cntrl = ax.annotate(gate_string_used, xy=cntrl_pos, xycoords="data",     #arrow CZ target to cntrl 
                         xytext=gate_pos, textcoords="data",                             #CZ target
