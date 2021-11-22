@@ -8,7 +8,7 @@ from pyquil.paulis import ID, sZ, sX, sY , exponential_map, exponentiate_commuti
 from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
 
 """
-Try to update git hub verions
+from 2021_env
 # Function alternative to Rigetti's QAOA()
 def ansatz_init_XYMixer( BetaGamma, ListPauli_termsMy, n_qubits, n_destinations,p, XY_or_Xmixer_list):
 def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations,   p,MyMixerHam):
