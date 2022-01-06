@@ -6,7 +6,7 @@ import numpy as np
 from pyquil.api import WavefunctionSimulator
 from pyquil.paulis import ID, sZ, sX, sY , exponential_map, exponentiate_commuting_pauli_sum
 from pyaqc.RCModules.QAOARC import decimal_state_to_binary_reversed, Energy_of_binary_state
-print('rig_dec_2021_env')
+
 """
 from 2021_env and rig_dec_2021_env
 # Function alternative to Rigetti's QAOA()
