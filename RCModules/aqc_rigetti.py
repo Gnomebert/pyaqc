@@ -461,11 +461,17 @@ def Adjacency_qubo_to_Regetti( Adjacency:"Adjacency table in form: qubo[(r,c)]",
         #Adjacency[(r,c)] the order of -1 and sZ(r) is key for later classical calculation
             if c == r:
                 SumPauli_termsMy +=Adjacency[(r,c)] * 0.5 * (1-sZ(r))
-                ListPauli_termsMy.append(Adjacency[(r,c)] * 0.5 * (1-sZ(r)))  
+                #ListPauli_termsMy.append(Adjacency[(r,c)] * 0.5 * (1-sZ(r)))  
+                ListPauli_termsMy.append(Adjacency[(r,c)] * 0.5 *ID()) 
+                ListPauli_termsMy.append(Adjacency[(r,c)] * -0.5 * sZ(r)  ) 
             if c > r :                                  
-                EdgeEnergy = ( 0.5 * sZ(r) * sZ(c) + 0.5 )       # was 0.5 * sZ(r) * sZ(c) - 0.5 
+                #EdgeEnergy = ( 0.5 * sZ(r) * sZ(c) + 0.5 )       # was 0.5 * sZ(r) * sZ(c) - 0.5 
                 EdgeEnergy = ( 0.25 * sZ(r) * sZ(c) + 0.25 - 0.25*sZ(r) - 0.25*sZ(c) ) #Has expectation 1 when program(X(0),X(1)) otherwise 0
-                ListPauli_termsMy.append(Adjacency[(r,c)]  * EdgeEnergy) 
+                #ListPauli_termsMy.append(Adjacency[(r,c)]  * EdgeEnergy) 
+                ListPauli_termsMy.append(Adjacency[(r,c)]  *  0.25 * sZ(r) * sZ(c)) 
+                ListPauli_termsMy.append(Adjacency[(r,c)]  *  0.25*ID()) 
+                ListPauli_termsMy.append(Adjacency[(r,c)]  * (- 0.25*sZ(r))) 
+                ListPauli_termsMy.append(Adjacency[(r,c)]  * (- 0.25*sZ(c))) 
                 SumPauli_termsMy +=Adjacency[(r,c)]  * EdgeEnergy         
     return ListPauli_termsMy,SumPauli_termsMy 
 
