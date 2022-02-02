@@ -3,6 +3,7 @@
 # SAME adjacency array as Dwave equivalent Ising model:  IsingDwaveAmbulance.ipynb
 # CREATE n_qubits * n_qubits adjacency table, based on a constraint of the number of 1s in the solution
 import numpy as np
+
 #__all__ = ['testfunc','distance','print_details', 'CreateAmbulanceAdjacency']
 #My Methods used:
 """
