@@ -350,6 +350,7 @@ Rotation angle for rth rotation in that chapter
                     p += RY(2*np.arccos(np.sqrt(r/(noted_qubit + 1)) ), rotated_qubit).controlled(noted_qubit).controlled(rotated_qubit+1)
                 p +=CNOT(rotated_qubit,noted_qubit)
     return p
+    
 def fixed_hw_states(init_prog0, qudit_start, qudit_end, HW, init_state='000111'):
     """
     return 'init_prog0' with a fixed hamming weight('HW') program state between qubits; qudit_start, qudit_end
