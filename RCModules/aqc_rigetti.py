@@ -90,8 +90,8 @@ def ansatz_EV_init(prog_init,  pauli_cost_terms_list, n_qubits, n_destinations, 
     def ansatz_EV( initial_angle ):
         #prog = prog_init + ansatz_init_XYMixer(initial_angle,pauli_cost_terms_list, n_qubits, n_destinations, p,MyMixerHam )
         prog = prog_init + ansatz_init_XYMixer(initial_angle,SumPauli_all_terms, n_qubits, n_destinations, p,MyMixerHam )
-        EV = WavefunctionSimulator(timeout=10).expectation(prep_prog=prog, pauli_terms=SumPauli_all_terms)
-        #EV = WavefunctionSimulator(timeout=10).expectation(prep_prog=Known_state_sol, pauli_terms=pauli_cost_terms)
+        EV = WavefunctionSimulator(timeout=200).expectation(prep_prog=prog, pauli_terms=SumPauli_all_terms)
+        #EV = WavefunctionSimulator(timeout=200).expectation(prep_prog=Known_state_sol, pauli_terms=pauli_cost_terms)
         #print(prog)
         return np.real(EV  )        #convert the potentially complex number to its real component
 
@@ -114,7 +114,7 @@ def get_gnd_state_prob(opt_Angle,ansatz_prog,SumPauli_termsMy,n_qubits, E_gnd_st
     
     solution_ansatz = ansatz_prog(opt_Angle)        #   dict {state_i:prob_i}
     
-    probsAbsolute  = WavefunctionSimulator(timeout=10).wavefunction(solution_ansatz).get_outcome_probs()
+    probsAbsolute  = WavefunctionSimulator(timeout=200).wavefunction(solution_ansatz).get_outcome_probs()
     opt_probs_absolute = [x for x in probsAbsolute.values()]
     
     for n in range(2**n_qubits):        
@@ -169,7 +169,7 @@ state_feasible=None, prt_details=False):
         min_energy_constraint = min_energy( Adjacency_constraint, n_qubits, state_feasible=state_feasible.replace(' ',''))
         ListPauli_terms_constr,SumPauli_termsMy_constr  = Adjacency_qubo_to_Regetti( Adjacency_constraint, n_qubits)
         
-    probsAbsolute  = WavefunctionSimulator(timeout=10).wavefunction(solution_ansatz).get_outcome_probs()
+    probsAbsolute  = WavefunctionSimulator(timeout=200).wavefunction(solution_ansatz).get_outcome_probs()
     opt_probs_absolute = [x for x in probsAbsolute.values()]
     for n in range(2**n_qubits):
         
@@ -442,7 +442,7 @@ def Adjacency_qubo_to_Regetti( Adjacency:"Adjacency table in form: qubo[(r,c)]",
     """
     Returns: ListPauli_termsMy (type:lists[pauli_sum]),and SumPauli_termsMy (type: pauli_sum)  that are required by the Rigetti function;
 
-    expectation = WavefunctionSimulator(timeout=10).expectation(prep_prog=prog_init, pauli_terms=ListPauli_termsMy)
+    expectation = WavefunctionSimulator(timeout=200).expectation(prep_prog=prog_init, pauli_terms=ListPauli_termsMy)
         or vqe_run( ListPauli_termsMy)
     
     In a qubo, as opposed to an Ising, The expectation of a node or edge of weighting W are:
@@ -481,7 +481,7 @@ def Adjacency_Ising_to_Regetti( Adjacency: 'Adjacency table in form: qubo[(r,c)]
     """
     Returns: ListPauli_termsMy (type:lists[Paulisum]) that are required by the Rigetti function;
 
-    expectation = WavefunctionSimulator(timeout=10).expectation(prep_prog=prog_init, pauli_terms=ListPauli_termsMy)
+    expectation = WavefunctionSimulator(timeout=200).expectation(prep_prog=prog_init, pauli_terms=ListPauli_termsMy)
 
     In a Ising , as opposed to an qubo, The expectation of a node or edge of weighting W are:
         Relation        Output/expectation      Qubit condition
@@ -784,7 +784,7 @@ def get_approx_ratio_init(prog_init,MyMixerHam,ListPauli_termsMy,SumPauli_termsM
             solution_ansatz = ansatz_prog_flexible_p(opt_betagamma)
             
         
-        probsAbsolute  = WavefunctionSimulator(timeout=10).wavefunction(solution_ansatz).get_outcome_probs()
+        probsAbsolute  = WavefunctionSimulator(timeout=200).wavefunction(solution_ansatz).get_outcome_probs()
         opt_probs_absolute = [x for x in probsAbsolute.values()]
         
         for n in range(2**n_qubits):
