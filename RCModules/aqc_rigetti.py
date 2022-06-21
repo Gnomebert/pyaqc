@@ -146,7 +146,7 @@ state_feasible=None, prt_details=False):
         'Adjacency_constraint'  The adjacency table which contain only the constraint energies , and no Soft constraints (eg distance)
             type: dict example {(0, 0): 5,  (1, 1): -1,  (2, 2): -1}
         This is required to calculate the approximation ratio
-        'state_feasible' a string of a state that complies with all the constraints in Adjacency_constraint. For example;  '11011'.capitalize. 
+        'state_feasible' a string of a state that complies with all the constraints in Adjacency_constraint. For example;  '11011'. 
             type: string of a binary state
         This speeds up the approximation ratio calculation
         
