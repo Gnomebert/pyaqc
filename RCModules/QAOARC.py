@@ -67,6 +67,11 @@ def parity_even_p(state, marked_qubits):
     :param marked_qubits: The indexes to be considered in the parity sum.
     
     :returns: A boolean corresponding to the parity.
+    Example of two edges and one state
+    edge_12     [1,2]   '110' so edge_22 & state.count("1") = 2 so edge is  excited     returns 0
+    state               '110'
+    edge_02     [0,2]   '101'
+    edge_02 & state     '100' so edge_02 & state.count("1") = 1 so edge is NOT excited  returns +1
     """
     assert isinstance(state, int), "{} is not an integer. Must call " \
                                    "parity_even_p with an integer " \
@@ -78,7 +83,9 @@ def parity_even_p(state, marked_qubits):
     #Ansatz cases: a) 20% of time|101> or b) 80% of time|011>
     #RC case a) mask & state =  0b101 ie even so returns 0 case b) mask & state = 0b001 ie odd so returns 1
     # this is the correct outcome from an observable that is an edge
+
     return bin(mask & state).count("1") % 2 == 0
+    
 def decimal_state_to_binary_reversed(state:'(type:int) decimal ref to a state qn...q0', n_qubits):
     """
 
